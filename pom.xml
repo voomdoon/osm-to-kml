@@ -1,0 +1,58 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>de.voomdoon.tool</groupId>
+		<artifactId>vd-tool-parent</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>de.voomdoon.tool.map</groupId>
+	<artifactId>osm-to-kml</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+
+	<properties>
+		<toolMainClass>de.voomdoon.tool.map.osmtokml.OsmToKmlMain</toolMainClass>
+	</properties>
+
+	<dependencies>
+		<!-- + + + + + + + + + + compile dependencies + + + + + + + + + + -->
+		<!-- + + + + + internal voomdoon compile dependencies + + + + + -->
+		<dependency>
+			<groupId>de.voomdoon.logging</groupId>
+			<artifactId>vd-logging</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+			<dependency>
+			<groupId>de.voomdoon.util</groupId>
+			<artifactId>vd-cli-util</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>de.voomdoon.logging</groupId>
+			<artifactId>vd-log4j2-logging-connector</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+		<!-- - - - - - internal voomdoon compile dependencies - - - - - -->
+		<!-- - - - - - - - - - - compile dependencies - - - - - - - - - - -->
+
+		<!-- + + + + + + + + + + test dependencies + + + + + + + + + + -->
+		<!-- + + + + + internal voomdoon test dependencies + + + + + -->
+		<dependency>
+			<groupId>de.voomdoon.testing</groupId>
+			<artifactId>vd-test-util</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>de.voomdoon.util</groupId>
+			<artifactId>vd-commons-util</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- - - - - - internal voomdoon test dependencies - - - - - -->
+		<!-- - - - - - - - - - - test dependencies - - - - - - - - - - -->
+	</dependencies>
+</project>
