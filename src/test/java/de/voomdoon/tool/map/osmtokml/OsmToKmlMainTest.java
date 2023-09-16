@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import de.voomdoon.testing.tests.TestBase;
-import de.voomdoon.util.commons.Output;
+import de.voomdoon.util.commons.SystemOutput;
 
 /**
  * DOCME add JavaDoc for
@@ -36,9 +36,9 @@ class OsmToKmlMainTest {
 		void test_help_cotainsName() throws Exception {
 			logTestStart();
 
-			Output output = Output.run(() -> OsmToKmlMain.main(new String[] { "--help" }));
+			SystemOutput output = SystemOutput.run(() -> OsmToKmlMain.main(new String[] { "--help" }));
 
-			assertThat(output).extracting(Output::getOut).asString().containsSubsequence("OSM2KML");
+			assertThat(output).extracting(SystemOutput::getOut).asString().containsSubsequence("OSM2KML");
 		}
 	}
 }
