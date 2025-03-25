@@ -1,8 +1,7 @@
 package de.voomdoon.tool.map.osmtokml;
 
-import java.util.Map;
-
 import de.voomdoon.util.cli.MainBase;
+import de.voomdoon.util.cli.Program;
 
 /**
  * DOCME add JavaDoc for
@@ -20,18 +19,7 @@ public class OsmToKmlMain extends MainBase {
 	 * @since 0.1.0
 	 */
 	public static void main(String[] args) {
-		new OsmToKmlMain(args, Map.of()).run();
-	}
-
-	/**
-	 * DOCME add JavaDoc for constructor OsmToolMain
-	 * 
-	 * @param args
-	 * @param subMains
-	 * @since 0.1.0
-	 */
-	protected OsmToKmlMain(String[] args, Map<String, Class<?>> subMains) {
-		super(args, subMains);
+		Program.run(args);
 	}
 
 	/**
@@ -40,5 +28,15 @@ public class OsmToKmlMain extends MainBase {
 	@Override
 	protected String getName() {
 		return "OSM2KML";
+	}
+
+	/**
+	 * @since 0.1.0
+	 */
+	@Override
+	protected void registerSubMains() {
+
+		// TODO implement registerSubMains
+		throw new UnsupportedOperationException("'registerSubMains' not implemented at 'MainBase'!");
 	}
 }
