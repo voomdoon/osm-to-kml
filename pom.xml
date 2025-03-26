@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>de.voomdoon.tool</groupId>
 		<artifactId>vd-tool-parent</artifactId>
-		<version>0.1.0-SNAPSHOT</version>
+		<version>0.2.0-SNAPSHOT</version>
 	</parent>
 
 	<groupId>de.voomdoon.tool.map</groupId>
@@ -20,21 +20,6 @@
 	<dependencies>
 		<!-- + + + + + + + + + + compile dependencies + + + + + + + + + + -->
 		<!-- + + + + + internal voomdoon compile dependencies + + + + + -->
-		<dependency>
-			<groupId>de.voomdoon.logging</groupId>
-			<artifactId>vd-logging</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
-		</dependency>
-			<dependency>
-			<groupId>de.voomdoon.util</groupId>
-			<artifactId>vd-cli-util</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>de.voomdoon.logging</groupId>
-			<artifactId>vd-log4j2-logging-connector</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
-		</dependency>
 		<!-- - - - - - internal voomdoon compile dependencies - - - - - -->
 		<!-- - - - - - - - - - - compile dependencies - - - - - - - - - - -->
 
