@@ -17,9 +17,26 @@
 		<toolMainClass>de.voomdoon.tool.map.osmtokml.OsmToKmlMain</toolMainClass>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>5.12.0</version> <!-- Align everything to 5.12.0 -->
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<!-- + + + + + + + + + + compile dependencies + + + + + + + + + + -->
 		<!-- + + + + + internal voomdoon compile dependencies + + + + + -->
+		<dependency>
+			<groupId>de.voomdoon.util</groupId>
+			<artifactId>vd-kml-util</artifactId>
+			<version>0.2.0-SNAPSHOT</version>
+		</dependency>
 		<!-- - - - - - internal voomdoon compile dependencies - - - - - -->
 		<!-- - - - - - - - - - - compile dependencies - - - - - - - - - - -->
 
@@ -27,14 +44,14 @@
 		<!-- + + + + + internal voomdoon test dependencies + + + + + -->
 		<dependency>
 			<groupId>de.voomdoon.testing</groupId>
-			<artifactId>vd-test-util</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<artifactId>vd-logging-test-util</artifactId>
+			<version>0.2.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>de.voomdoon.util</groupId>
 			<artifactId>vd-commons-util</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
+			<version>0.2.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- - - - - - internal voomdoon test dependencies - - - - - -->
