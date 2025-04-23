@@ -16,19 +16,44 @@ public class OsmToKml {
 	/**
 	 * @since 0.1.0
 	 */
+	private List<String> inputs;
+
+	/**
+	 * @since 0.1.0
+	 */
 	private List<String> outputs;
 
 	/**
 	 * DOCME add JavaDoc for method run
 	 * 
 	 * @throws IOException
+	 * @throws InvalidInputFileException
 	 * 
 	 * @since 0.1.0
 	 */
-	public void run() throws IOException {
+	public void run() throws IOException, InvalidInputFileException {
+		for (String input : inputs) {
+			if (!input.endsWith(".pbf")) {
+				throw new InvalidInputFileException("Expecting PBF input file, but got: " + input);
+			}
+		}
+
 		for (String output : outputs) {
 			new File(output).createNewFile();
 		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for method withInputs
+	 * 
+	 * @param inputs
+	 * @return
+	 * @since 0.1.0
+	 */
+	public OsmToKml withInputs(List<String> inputs) {
+		this.inputs = inputs;
+
+		return this;
 	}
 
 	/**
