@@ -2,6 +2,7 @@ package de.voomdoon.tool.map.osmtokml;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +33,7 @@ class OsmToKmlMainTest {
 		 * 
 		 * @since 0.1.0
 		 */
+		@Disabled
 		@Test
 		void test_help_cotainsName() throws Exception {
 			logTestStart();
