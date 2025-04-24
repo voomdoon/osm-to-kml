@@ -19,7 +19,7 @@ import de.voomdoon.testing.file.WithTempOutputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
 import de.voomdoon.tool.map.osmtokml.OsmToKmlProgram.OsmToKmlProgramV2Options;
 import de.voomdoon.util.cli.ProgramRunException;
-import de.voomdoon.util.cli.args.InvalidProgramOptionException;
+import de.voomdoon.util.cli.args.exception.InvalidProgramOptionException;
 import de.voomdoon.util.cli.testing.ProgramTestingUtil;
 
 /**

@@ -3,8 +3,8 @@ package de.voomdoon.tool.map.osmtokml;
 import java.util.List;
 
 import de.voomdoon.util.cli.Program;
-import de.voomdoon.util.cli.args.InvalidProgramOptionException;
 import de.voomdoon.util.cli.args.Option;
+import de.voomdoon.util.cli.args.exception.InvalidProgramOptionException;
 
 /**
  * DOCME add JavaDoc for
