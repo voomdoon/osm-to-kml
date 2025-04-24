@@ -64,14 +64,6 @@ public class OsmToKmlProgram extends Program {
 	}
 
 	/**
-	 * @param args
-	 * @since 0.1.0
-	 */
-	public static void runWithoutExit(String[] args) {
-		Program.runWithoutExit(args);
-	}
-
-	/**
 	 * @since 0.1.0
 	 */
 	private OsmToKmlProgramV2Options options = new OsmToKmlProgramV2Options();
