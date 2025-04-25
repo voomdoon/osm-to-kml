@@ -14,7 +14,7 @@
 	<version>0.1.0-SNAPSHOT</version>
 
 	<properties>
-		<toolMainClass>de.voomdoon.tool.map.osmtokml.OsmToKmlMain</toolMainClass>
+		<toolMainClass>de.voomdoon.tool.map.osmtokml.OsmToKmlProgram</toolMainClass>
 	</properties>
 
 	<dependencyManagement>
