@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.voomdoon.util.cli.Program;
 import de.voomdoon.util.cli.args.Option;
-import de.voomdoon.util.cli.args.exception.InvalidProgramOptionException;
+import de.voomdoon.util.cli.args.exception.option.CliOptionException;
 
 /**
  * DOCME add JavaDoc for
@@ -91,7 +91,7 @@ public class OsmToKmlProgram extends Program {
 		try {
 			osmToKml.run();
 		} catch (InvalidInputFileException e) {
-			throw new InvalidProgramOptionException(options.input, e.getMessage());
+			throw new CliOptionException(options.input, e.getMessage());
 		}
 
 		// TODO implement run
