@@ -3,8 +3,8 @@ package de.voomdoon.tool.map.osmtokml;
 import java.util.List;
 
 import de.voomdoon.util.cli.Program;
+import de.voomdoon.util.cli.ProgramRunException;
 import de.voomdoon.util.cli.args.Option;
-import de.voomdoon.util.cli.args.exception.option.CliOptionException;
 
 /**
  * DOCME add JavaDoc for
@@ -54,8 +54,6 @@ public class OsmToKmlProgram extends Program {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method main
-	 * 
 	 * @param args
 	 * @since 0.1.0
 	 */
@@ -91,9 +89,7 @@ public class OsmToKmlProgram extends Program {
 		try {
 			osmToKml.run();
 		} catch (InvalidInputFileException e) {
-			throw new CliOptionException(options.input, e.getMessage());
+			throw new ProgramRunException(e);
 		}
-
-		// TODO implement run
 	}
 }
