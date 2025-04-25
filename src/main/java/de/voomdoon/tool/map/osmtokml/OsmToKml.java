@@ -6,6 +6,7 @@ import java.util.List;
 import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
 import de.micromata.opengis.kml.v_2_2_0.Placemark;
+import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.voomdoon.util.kml.io.KmlWriter;
 
 /**
@@ -41,7 +42,11 @@ public class OsmToKml {
 		for (String output : outputs) {
 			Kml kml = new Kml();
 			Document document = new Document();
-			document.addToFeature(new Placemark());
+			Placemark placemark = new Placemark();
+			Point point = new Point();
+			point.addToCoordinates(13.4123426, 52.5237871);
+			placemark.setGeometry(point);
+			document.addToFeature(placemark);
 			kml.setFeature(document);
 
 			new KmlWriter().write(kml, output);

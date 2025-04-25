@@ -2,7 +2,6 @@ package de.voomdoon.tool.map.osmtokml;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.File;
@@ -11,13 +10,17 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
+import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import de.micromata.opengis.kml.v_2_2_0.Coordinate;
 import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
 import de.micromata.opengis.kml.v_2_2_0.Placemark;
+import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.voomdoon.testing.file.TempFileExtension;
 import de.voomdoon.testing.file.TempInputFile;
 import de.voomdoon.testing.file.TempOutputFile;
@@ -82,7 +85,21 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_output_DocumentContainsPlacemark(@TempInputFile File input, @TempOutputFile File output)
+		void test_output_nodeBecomesPlacemark(@TempInputFile File input, @TempOutputFile File output) throws Exception {
+			logTestStart();
+
+			withInputs(input, "node_1566942192.osm.pbf");
+
+			Kml actual = run(output);
+
+			assertPlacemark(actual);
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_output_nodePlacemarkGeometryIsPoint(@TempInputFile File input, @TempOutputFile File output)
 				throws Exception {
 			logTestStart();
 
@@ -90,11 +107,26 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			Kml actual = run(output);
 
-			assumeThat(actual).isNotNull();
-			Document actualDocument = (Document) assumeThat(actual.getFeature()).describedAs("root feature")
-					.isInstanceOf(Document.class).actual();
+			assertPoint(actual);
+		}
 
-			assertThat(actualDocument.getFeature()).singleElement().isInstanceOf(Placemark.class);
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_output_nodePlacemarkGeometryPointCoordinatesAreCorrect(@TempInputFile File input,
+				@TempOutputFile File output) throws Exception {
+			logTestStart();
+
+			withInputs(input, "node_1566942192.osm.pbf");
+
+			Kml actual = run(output);
+
+			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
+					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
+						assertThat(coordinate).extracting(Coordinate::getLatitude).isEqualTo(52.5237871);
+						assertThat(coordinate).extracting(Coordinate::getLongitude).isEqualTo(13.4123426);
+					});
 		}
 
 		/**
@@ -109,9 +141,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			Kml actual = run(output);
 
-			assumeThat(actual).isNotNull();
-
-			assertThat(actual.getFeature()).describedAs("root feature").isInstanceOf(Document.class);
+			assertDocument(actual);
 		}
 
 		/**
@@ -126,6 +156,40 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			Kml actual = run(output);
 
 			assertThat(actual).isNotNull();
+		}
+
+		/**
+		 * @param actual
+		 *            {@link Kml}
+		 * @return {@link ObjectAssert} for {@link Document}
+		 * @since 0.1.0
+		 */
+		private ObjectAssert<Document> assertDocument(Kml actual) {
+			return assertThat(actual).extracting(Kml::getFeature).describedAs("root feature")
+					.isInstanceOf(Document.class).asInstanceOf(InstanceOfAssertFactories.type(Document.class));
+		}
+
+		/**
+		 * @param actual
+		 *            {@link Kml}
+		 * @return {@link ObjectAssert} for single {@link Placemark}
+		 * @since 0.1.0
+		 */
+		private ObjectAssert<Placemark> assertPlacemark(Kml actual) {
+			return assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
+					.singleElement().isInstanceOf(Placemark.class)
+					.asInstanceOf(InstanceOfAssertFactories.type(Placemark.class));
+		}
+
+		/**
+		 * @param actual
+		 *            {@link Kml}
+		 * @return {@link ObjectAssert} for {@link Point} of first {@link Placemark}
+		 * @since 0.1.0
+		 */
+		private ObjectAssert<Point> assertPoint(Kml actual) {
+			return assertPlacemark(actual).extracting(Placemark::getGeometry).describedAs("geometry")
+					.isInstanceOf(Point.class).asInstanceOf(InstanceOfAssertFactories.type(Point.class));
 		}
 
 		/**
