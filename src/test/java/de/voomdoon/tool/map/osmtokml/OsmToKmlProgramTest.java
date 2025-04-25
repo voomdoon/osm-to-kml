@@ -18,7 +18,7 @@ import de.voomdoon.testing.file.WithTempInputFiles;
 import de.voomdoon.testing.file.WithTempOutputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
 import de.voomdoon.tool.map.osmtokml.OsmToKmlProgram.OsmToKmlProgramV2Options;
-import de.voomdoon.util.cli.ProgramRunException;
+import de.voomdoon.util.cli.ProgramExecutionException;
 import de.voomdoon.util.cli.args.exception.option.CliOptionException;
 import de.voomdoon.util.cli.testing.ProgramTestingUtil;
 
@@ -62,7 +62,7 @@ class OsmToKmlProgramTest {
 
 			ProgramTestingUtil.enableTestingMode();
 
-			ProgramRunException actual = assertThrows(ProgramRunException.class, () -> OsmToKmlProgram
+			ProgramExecutionException actual = assertThrows(ProgramExecutionException.class, () -> OsmToKmlProgram
 					.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath() }));
 
 			assertThat(actual).hasCauseInstanceOf(CliOptionException.class);
