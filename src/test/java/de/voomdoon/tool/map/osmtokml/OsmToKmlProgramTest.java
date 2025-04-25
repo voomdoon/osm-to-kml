@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,22 +46,17 @@ class OsmToKmlProgramTest {
 		/**
 		 * @since 0.1.0
 		 */
-		@Test
-		void test_input_isAccepted(@TempInputFile File input) throws Exception {
-			logTestStart();
-
-			assertDoesNotThrow(() -> OsmToKmlProgram
-					.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath() }));
+		@BeforeAll
+		static void beforeAll() {
+			ProgramTestingUtil.enableTestingMode();
 		}
 
 		/**
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_input_nonPbfIsRejected(@TempFile File input) throws Exception {
+		void test_error_input_nonPbfIsRejected(@TempFile File input) throws Exception {
 			logTestStart();
-
-			ProgramTestingUtil.enableTestingMode();
 
 			ProgramExecutionException actual = assertThrows(ProgramExecutionException.class, () -> OsmToKmlProgram
 					.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath() }));
@@ -73,12 +69,24 @@ class OsmToKmlProgramTest {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_output_fileIsWritten(@TempOutputFile File output) throws Exception {
+		void test_output_fileIsWritten(@TempInputFile File input, @TempOutputFile File output) throws Exception {
 			logTestStart();
 
-			OsmToKmlProgram.main(new String[] { "--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() });
+			OsmToKmlProgram.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath(),
+					"--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() });
 
 			assertThat(output).exists();
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_success(@TempInputFile File input, @TempOutputFile File output) throws Exception {
+			logTestStart();
+
+			assertDoesNotThrow(() -> OsmToKmlProgram.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT,
+					input.getAbsolutePath(), "--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() }));
 		}
 	}
 }

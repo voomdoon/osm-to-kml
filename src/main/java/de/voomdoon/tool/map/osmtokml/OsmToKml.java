@@ -32,11 +32,7 @@ public class OsmToKml {
 	 * @since 0.1.0
 	 */
 	public void run() throws IOException, InvalidInputFileException {
-		for (String input : inputs) {
-			if (!input.endsWith(".pbf")) {
-				throw new InvalidInputFileException("Expecting PBF input file, but got: " + input);
-			}
-		}
+		validate();
 
 		for (String output : outputs) {
 			new File(output).createNewFile();
@@ -48,9 +44,20 @@ public class OsmToKml {
 	 * 
 	 * @param inputs
 	 * @return
+	 * @throws InvalidInputFileException
 	 * @since 0.1.0
 	 */
-	public OsmToKml withInputs(List<String> inputs) {
+	public OsmToKml withInputs(List<String> inputs) throws InvalidInputFileException {
+		if (inputs.isEmpty()) {
+			throw new IllegalArgumentException("Argument 'inputs' must not be empty");
+		}
+
+		for (String input : inputs) {
+			if (!input.endsWith(".pbf")) {
+				throw new InvalidInputFileException("Expecting PBF input file, but got: " + input);
+			}
+		}
+
 		this.inputs = inputs;
 
 		return this;
@@ -64,8 +71,23 @@ public class OsmToKml {
 	 * @since 0.1.0
 	 */
 	public OsmToKml withOutputs(List<String> outputs) {
+		if (outputs.isEmpty()) {
+			throw new IllegalArgumentException("Argument 'outputs' must not be empty");
+		}
+
 		this.outputs = outputs;
 
 		return this;
+	}
+
+	/**
+	 * DOCME add JavaDoc for method validate
+	 * 
+	 * @since 0.1.0
+	 */
+	private void validate() {
+		if (inputs == null) {
+			throw new IllegalStateException("No input files specified");
+		}
 	}
 }
