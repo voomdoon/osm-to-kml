@@ -1,8 +1,12 @@
 package de.voomdoon.tool.map.osmtokml;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import de.micromata.opengis.kml.v_2_2_0.Document;
+import de.micromata.opengis.kml.v_2_2_0.Kml;
+import de.micromata.opengis.kml.v_2_2_0.Placemark;
+import de.voomdoon.util.kml.io.KmlWriter;
 
 /**
  * DOCME add JavaDoc for
@@ -35,7 +39,12 @@ public class OsmToKml {
 		validate();
 
 		for (String output : outputs) {
-			new File(output).createNewFile();
+			Kml kml = new Kml();
+			Document document = new Document();
+			document.addToFeature(new Placemark());
+			kml.setFeature(document);
+
+			new KmlWriter().write(kml, output);
 		}
 	}
 
@@ -87,7 +96,9 @@ public class OsmToKml {
 	 */
 	private void validate() {
 		if (inputs == null) {
-			throw new IllegalStateException("No input files specified");
+			throw new IllegalStateException("No input files specified!");
+		} else if (outputs == null) {
+			throw new IllegalStateException("No output files specified!");
 		}
 	}
 }
