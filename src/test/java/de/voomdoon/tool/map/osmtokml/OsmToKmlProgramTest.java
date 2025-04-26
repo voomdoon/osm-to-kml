@@ -17,9 +17,8 @@ import de.voomdoon.logging.LogLevel;
 import de.voomdoon.testing.file.TempFile;
 import de.voomdoon.testing.file.TempFileExtension;
 import de.voomdoon.testing.file.TempInputFile;
-import de.voomdoon.testing.file.TempOutputFile;
+import de.voomdoon.testing.file.TempOutputDirectory;
 import de.voomdoon.testing.file.WithTempInputFiles;
-import de.voomdoon.testing.file.WithTempOutputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
 import de.voomdoon.tool.map.osmtokml.OsmToKmlProgram.OsmToKmlProgramV2Options;
 import de.voomdoon.util.cli.ProgramExecutionException;
@@ -43,7 +42,6 @@ class OsmToKmlProgramTest {
 	@Nested
 	@ExtendWith(TempFileExtension.class)
 	@WithTempInputFiles(extension = "pbf")
-	@WithTempOutputFiles(extension = "kml")
 	class MainTest extends LoggingCheckingTestBase {
 
 		/**
@@ -66,11 +64,14 @@ class OsmToKmlProgramTest {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_error_input_nonPbfIsRejected(@TempFile File input) throws Exception {
+		void test_error_input_nonPbfIsRejected(@TempFile File input, @TempOutputDirectory File output)
+				throws Exception {
 			logTestStart();
 
-			ProgramExecutionException actual = assertThrows(ProgramExecutionException.class, () -> OsmToKmlProgram
-					.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath() }));
+			ProgramExecutionException actual = assertThrows(ProgramExecutionException.class,
+					() -> OsmToKmlProgram
+							.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath(),
+									"--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() }));
 
 			assertThat(actual).hasCauseInstanceOf(ProgramRunException.class)//
 					.cause().hasCauseInstanceOf(InvalidInputFileException.class);
@@ -80,7 +81,7 @@ class OsmToKmlProgramTest {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_output_fileIsWritten(@TempInputFile File input, @TempOutputFile File output) throws Exception {
+		void test_output_fileIsWritten(@TempInputFile File input, @TempOutputDirectory File output) throws Exception {
 			logTestStart();
 
 			OsmToKmlTest.copyResourceToInputFile("node_1566942192.osm.pbf", input);
@@ -95,7 +96,7 @@ class OsmToKmlProgramTest {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_success(@TempInputFile File input, @TempOutputFile File output) throws Exception {
+		void test_success(@TempInputFile File input, @TempOutputDirectory File output) throws Exception {
 			logTestStart();
 
 			OsmToKmlTest.copyResourceToInputFile("node_1566942192.osm.pbf", input);

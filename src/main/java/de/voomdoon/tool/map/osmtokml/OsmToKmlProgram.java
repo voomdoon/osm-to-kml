@@ -5,6 +5,7 @@ import java.util.List;
 import de.voomdoon.util.cli.Program;
 import de.voomdoon.util.cli.ProgramRunException;
 import de.voomdoon.util.cli.args.Option;
+import de.voomdoon.util.cli.args.exception.option.MissingCliOptionException;
 
 /**
  * DOCME add JavaDoc for
@@ -81,10 +82,10 @@ public class OsmToKmlProgram extends Program {
 	protected void run() throws Exception {
 		List<String> inputs = getArguments().getOptionValue(options.input).map(output -> List.of(output))
 				.orElse(List.of());
-		List<String> outputs = getArguments().getOptionValue(options.output).map(output -> List.of(output))
-				.orElse(List.of());
+		String output = getArguments().getOptionValue(options.output)
+				.orElseThrow(() -> new MissingCliOptionException(options.output));
 
-		OsmToKml osmToKml = new OsmToKml().withInputs(inputs).withOutputs(outputs);
+		OsmToKml osmToKml = new OsmToKml().withInputs(inputs).withOutput(output);
 
 		try {
 			osmToKml.run();

@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -30,9 +31,8 @@ import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.voomdoon.logging.LogLevel;
 import de.voomdoon.testing.file.TempFileExtension;
 import de.voomdoon.testing.file.TempInputFile;
-import de.voomdoon.testing.file.TempOutputFile;
+import de.voomdoon.testing.file.TempOutputDirectory;
 import de.voomdoon.testing.file.WithTempInputFiles;
-import de.voomdoon.testing.file.WithTempOutputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
 import de.voomdoon.testing.tests.TestBase;
 import de.voomdoon.util.kml.io.KmlReader;
@@ -56,7 +56,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	@Nested
 	@ExtendWith(TempFileExtension.class)
 	@WithTempInputFiles(extension = "pbf")
-	@WithTempOutputFiles(extension = "kml")
 	class RunTest extends TestBase {
 
 		/**
@@ -105,12 +104,13 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_output_nodeBecomesPlacemark(@TempInputFile File input, @TempOutputFile File output) throws Exception {
+		void test_output_nodeBecomesPlacemark(@TempInputFile File input, @TempOutputDirectory File output)
+				throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output);
+			Kml actual = run(output, input);
 
 			assertPlacemark(actual);
 		}
@@ -119,13 +119,13 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_output_nodePlacemarkGeometryIsPoint(@TempInputFile File input, @TempOutputFile File output)
+		void test_output_nodePlacemarkGeometryIsPoint(@TempInputFile File input, @TempOutputDirectory File output)
 				throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output);
+			Kml actual = run(output, input);
 
 			assertPoint(actual);
 		}
@@ -135,12 +135,12 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 */
 		@Test
 		void test_output_nodePlacemarkGeometryPointCoordinatesAreCorrect(@TempInputFile File input,
-				@TempOutputFile File output) throws Exception {
+				@TempOutputDirectory File output) throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output);
+			Kml actual = run(output, input);
 
 			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
 					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
@@ -151,12 +151,12 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 */
 		@Test
 		void test_output_nodePlacemarkGeometryPointCoordinatesAreCorrect2(@TempInputFile File input,
-				@TempOutputFile File output) throws Exception {
+				@TempOutputDirectory File output) throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_8400710442.osm.pbf");
 
-			Kml actual = run(output);
+			Kml actual = run(output, input);
 
 			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
 					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5186776, 13.4075684);
@@ -166,13 +166,13 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_output_rootFeatureIsDocument(@TempInputFile File input, @TempOutputFile File output)
+		void test_output_rootFeatureIsDocument(@TempInputFile File input, @TempOutputDirectory File output)
 				throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output);
+			Kml actual = run(output, input);
 
 			assertDocument(actual);
 		}
@@ -181,12 +181,12 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_success(@TempInputFile File input, @TempOutputFile File output) throws Exception {
+		void test_success(@TempInputFile File input, @TempOutputDirectory File output) throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output);
+			Kml actual = run(output, input);
 
 			assertThat(actual).isNotNull();
 		}
@@ -247,19 +247,22 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * DOCME add JavaDoc for method run
 		 * 
 		 * @param output
+		 * @param input
 		 * @return
 		 * @throws IOException
 		 * @throws InvalidInputFileException
 		 * @since 0.1.0
 		 */
-		private Kml run(File output) throws IOException, InvalidInputFileException {
-			osmToKml.withOutputs(List.of(output.getAbsolutePath()));
+		private Kml run(File output, File input) throws IOException, InvalidInputFileException {
+			osmToKml.withOutput(output.getAbsolutePath());
 
 			osmToKml.run();
 
-			logger.debug("output:\n" + Files.readString(output.toPath()));
+			String outputFile = output + "/" + input.getName().replace(".pbf", ".kml");
 
-			return new KmlReader().read(output.getAbsolutePath());
+			logger.debug("output:\n" + Files.readString(Path.of(outputFile)));
+
+			return new KmlReader().read(outputFile);
 		}
 
 		/**
@@ -324,7 +327,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	 */
 	@Nested
 	@ExtendWith(TempFileExtension.class)
-	@WithTempOutputFiles(extension = "kml")
 	class WithOutputsTets extends TestBase {
 
 		/**
@@ -336,20 +338,10 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_IAE_empty(@TempOutputFile String input) throws Exception {
+		void test_success(@TempOutputDirectory String input) throws Exception {
 			logTestStart();
 
-			assertThatThrownBy(() -> osmToKml.withOutputs(List.of())).isInstanceOf(IllegalArgumentException.class);
-		}
-
-		/**
-		 * @since 0.1.0
-		 */
-		@Test
-		void test_success(@TempOutputFile String input) throws Exception {
-			logTestStart();
-
-			assertDoesNotThrow(() -> osmToKml.withOutputs(List.of(input)));
+			assertDoesNotThrow(() -> osmToKml.withOutput(input));
 		}
 	}
 

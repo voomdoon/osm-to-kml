@@ -1,10 +1,13 @@
 package de.voomdoon.tool.map.osmtokml;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
+import de.voomdoon.logging.LogManager;
+import de.voomdoon.logging.Logger;
 import de.voomdoon.util.kml.io.KmlWriter;
 
 /**
@@ -24,7 +27,12 @@ public class OsmToKml {
 	/**
 	 * @since 0.1.0
 	 */
-	private List<String> outputs;
+	private final Logger logger = LogManager.getLogger(getClass());
+
+	/**
+	 * @since 0.1.0
+	 */
+	private String output;
 
 	/**
 	 * DOCME add JavaDoc for method run
@@ -40,15 +48,16 @@ public class OsmToKml {
 		for (String input : inputs) {
 			OsmData osmData = new OsmReader().read(input);
 
-			for (String output : outputs) {
-				Kml kml = new Kml();
-				Document document = new Document();
-				kml.setFeature(document);
+			Kml kml = new Kml();
+			Document document = new Document();
+			kml.setFeature(document);
 
-				new OsmConverter(document).convert(osmData);
+			new OsmConverter(document).convert(osmData);
 
-				new KmlWriter().write(kml, output);
-			}
+			String outputFile = output + "/" + new File(input).getName().replace(".pbf", ".kml");
+			logger.debug("Writing KML file: " + outputFile);
+			new File(output).mkdirs();
+			new KmlWriter().write(kml, outputFile);
 		}
 	}
 
@@ -79,16 +88,12 @@ public class OsmToKml {
 	/**
 	 * DOCME add JavaDoc for method withOutputs
 	 * 
-	 * @param outputs
+	 * @param output
 	 * @return
 	 * @since 0.1.0
 	 */
-	public OsmToKml withOutputs(List<String> outputs) {
-		if (outputs.isEmpty()) {
-			throw new IllegalArgumentException("Argument 'outputs' must not be empty");
-		}
-
-		this.outputs = outputs;
+	public OsmToKml withOutput(String output) {
+		this.output = output;
 
 		return this;
 	}
@@ -101,7 +106,7 @@ public class OsmToKml {
 	private void validate() {
 		if (inputs == null) {
 			throw new IllegalStateException("No input files specified!");
-		} else if (outputs == null) {
+		} else if (output == null) {
 			throw new IllegalStateException("No output files specified!");
 		}
 	}
