@@ -3,12 +3,8 @@ package de.voomdoon.tool.map.osmtokml;
 import java.io.IOException;
 import java.util.List;
 
-import org.openstreetmap.osmosis.core.domain.v0_6.Node;
-
 import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
-import de.micromata.opengis.kml.v_2_2_0.Placemark;
-import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.voomdoon.util.kml.io.KmlWriter;
 
 /**
@@ -47,13 +43,9 @@ public class OsmToKml {
 			for (String output : outputs) {
 				Kml kml = new Kml();
 				Document document = new Document();
-				Placemark placemark = new Placemark();
-				Point point = new Point();
-				Node node = osmData.getNodes().entrySet().iterator().next().getValue();
-				point.addToCoordinates(node.getLongitude(), node.getLatitude());
-				placemark.setGeometry(point);
-				document.addToFeature(placemark);
 				kml.setFeature(document);
+
+				new OsmConverter(document).convert(osmData);
 
 				new KmlWriter().write(kml, output);
 			}
