@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.ObjectAssert;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,11 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	@WithTempInputFiles(extension = "pbf")
 	@WithTempOutputFiles(extension = "kml")
 	class RunTest extends TestBase {
+
+		/**
+		 * @since 0.1.0
+		 */
+		private static final Offset<Double> EPSILON = within(1E-7);
 
 		/**
 		 * @since 0.1.0
@@ -139,9 +145,9 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
 					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
 						assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(52.5237871,
-								within(0.001));
+								EPSILON);
 						assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isCloseTo(13.4123426,
-								within(0.001));
+								EPSILON);
 					});
 		}
 
@@ -160,9 +166,9 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
 					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
 						assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(52.5186776,
-								within(0.001));
+								EPSILON);
 						assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isEqualTo(13.4075684,
-								within(0.001));
+								EPSILON);
 					});
 		}
 
