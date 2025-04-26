@@ -1,7 +1,10 @@
 package de.voomdoon.tool.map.osmtokml;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
+import static org.assertj.core.api.InstanceOfAssertFactories.DOUBLE;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.File;
@@ -9,9 +12,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.api.ObjectAssert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +26,7 @@ import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
 import de.micromata.opengis.kml.v_2_2_0.Placemark;
 import de.micromata.opengis.kml.v_2_2_0.Point;
+import de.voomdoon.logging.LogLevel;
 import de.voomdoon.testing.file.TempFileExtension;
 import de.voomdoon.testing.file.TempInputFile;
 import de.voomdoon.testing.file.TempOutputFile;
@@ -56,6 +62,14 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		private OsmToKml osmToKml = new OsmToKml();
+
+		/**
+		 * @since 0.1.0
+		 */
+		@AfterEach
+		void afterEach_removeAcceptedLogging() {
+			OsmToKmlTest.this.getLogCache().removeEvents(LogLevel.WARN, Pattern.compile(".*not implemented.*"));
+		}
 
 		/**
 		 * @since 0.1.0
@@ -124,8 +138,31 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
 					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
-						assertThat(coordinate).extracting(Coordinate::getLatitude).isEqualTo(52.5237871);
-						assertThat(coordinate).extracting(Coordinate::getLongitude).isEqualTo(13.4123426);
+						assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(52.5237871,
+								within(0.001));
+						assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isCloseTo(13.4123426,
+								within(0.001));
+					});
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_output_nodePlacemarkGeometryPointCoordinatesAreCorrect2(@TempInputFile File input,
+				@TempOutputFile File output) throws Exception {
+			logTestStart();
+
+			withInputs(input, "node_8400710442.osm.pbf");
+
+			Kml actual = run(output);
+
+			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
+					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
+						assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(52.5186776,
+								within(0.001));
+						assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isEqualTo(13.4075684,
+								within(0.001));
 					});
 		}
 
@@ -220,17 +257,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		private void withInputs(File input, String resource) throws InvalidInputFileException {
-			try (InputStream inputStream = OsmToKmlTest.class.getResourceAsStream("/input/" + resource)) {
-				try {
-					Files.copy(inputStream, input.toPath());
-				} catch (IOException e) {
-					// TODO implement error handling
-					throw new RuntimeException("Error at 'withInputs': " + e.getMessage(), e);
-				}
-			} catch (IOException e) {
-				// TODO implement error handling
-				throw new RuntimeException("Error at 'withInputs': " + e.getMessage(), e);
-			}
+			copyResourceToInputFile(resource, input);
 
 			osmToKml.withInputs(List.of(input.getAbsolutePath()));
 		}
@@ -309,6 +336,27 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			logTestStart();
 
 			assertDoesNotThrow(() -> osmToKml.withOutputs(List.of(input)));
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for method copyResourceToInputFile
+	 * 
+	 * @param resource
+	 * @param input
+	 * @since 0.1.0
+	 */
+	public static void copyResourceToInputFile(String resource, File input) {
+		try (InputStream inputStream = OsmToKmlTest.class.getResourceAsStream("/input/" + resource)) {
+			try {
+				Files.copy(inputStream, input.toPath());
+			} catch (IOException e) {
+				// TODO implement error handling
+				throw new RuntimeException("Error at 'withInputs': " + e.getMessage(), e);
+			}
+		} catch (IOException e) {
+			// TODO implement error handling
+			throw new RuntimeException("Error at 'withInputs': " + e.getMessage(), e);
 		}
 	}
 }

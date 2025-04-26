@@ -5,12 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import de.voomdoon.logging.LogLevel;
 import de.voomdoon.testing.file.TempFile;
 import de.voomdoon.testing.file.TempFileExtension;
 import de.voomdoon.testing.file.TempInputFile;
@@ -54,6 +57,14 @@ class OsmToKmlProgramTest {
 		/**
 		 * @since 0.1.0
 		 */
+		@AfterEach
+		void afterEach_removeAcceptedLogging() {
+			getLogCache().removeEvents(LogLevel.WARN, Pattern.compile(".*not implemented.*"));
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
 		@Test
 		void test_error_input_nonPbfIsRejected(@TempFile File input) throws Exception {
 			logTestStart();
@@ -72,6 +83,8 @@ class OsmToKmlProgramTest {
 		void test_output_fileIsWritten(@TempInputFile File input, @TempOutputFile File output) throws Exception {
 			logTestStart();
 
+			OsmToKmlTest.copyResourceToInputFile("node_1566942192.osm.pbf", input);
+
 			OsmToKmlProgram.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath(),
 					"--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() });
 
@@ -84,6 +97,8 @@ class OsmToKmlProgramTest {
 		@Test
 		void test_success(@TempInputFile File input, @TempOutputFile File output) throws Exception {
 			logTestStart();
+
+			OsmToKmlTest.copyResourceToInputFile("node_1566942192.osm.pbf", input);
 
 			assertDoesNotThrow(() -> OsmToKmlProgram.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT,
 					input.getAbsolutePath(), "--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() }));

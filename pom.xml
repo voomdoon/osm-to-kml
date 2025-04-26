@@ -15,6 +15,7 @@
 
 	<properties>
 		<toolMainClass>de.voomdoon.tool.map.osmtokml.OsmToKmlProgram</toolMainClass>
+		<osmosis.version>0.49.2</osmosis.version>
 	</properties>
 
 	<dependencyManagement>
@@ -38,6 +39,19 @@
 			<version>0.2.0-SNAPSHOT</version>
 		</dependency>
 		<!-- - - - - - internal voomdoon compile dependencies - - - - - -->
+
+		<!-- + + + + + external compile dependencies + + + + + -->
+		<dependency>
+			<groupId>org.openstreetmap.osmosis</groupId>
+			<artifactId>osmosis-core</artifactId>
+			<version>${osmosis.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openstreetmap.osmosis</groupId>
+			<artifactId>osmosis-pbf</artifactId>
+			<version>${osmosis.version}</version>
+		</dependency>
+		<!-- - - - - - external compile dependencies - - - - - -->
 		<!-- - - - - - - - - - - compile dependencies - - - - - - - - - - -->
 
 		<!-- + + + + + + + + + + test dependencies + + + + + + + + + + -->
