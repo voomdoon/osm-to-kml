@@ -142,13 +142,8 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			Kml actual = run(output);
 
-			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
-					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
-						assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(52.5237871,
-								EPSILON);
-						assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isCloseTo(13.4123426,
-								EPSILON);
-					});
+			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
+					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
 		}
 
 		/**
@@ -163,13 +158,8 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			Kml actual = run(output);
 
-			assertPoint(actual).extracting(Point::getCoordinates).asInstanceOf(InstanceOfAssertFactories.LIST)
-					.singleElement().isInstanceOfSatisfying(Coordinate.class, coordinate -> {
-						assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(52.5186776,
-								EPSILON);
-						assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isEqualTo(13.4075684,
-								EPSILON);
-					});
+			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
+					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5186776, 13.4075684);
 		}
 
 		/**
@@ -199,6 +189,24 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			Kml actual = run(output);
 
 			assertThat(actual).isNotNull();
+		}
+
+		/**
+		 * DOCME add JavaDoc for method assertCoordinate
+		 * 
+		 * @param coordinateAssert
+		 * @param expectedLatitude
+		 * @param expectedLongitude
+		 * @since 0.1.0
+		 */
+		private void assertCoordinate(ObjectAssert<? extends Object> coordinateAssert, double expectedLatitude,
+				double expectedLongitude) {
+			coordinateAssert.isInstanceOfSatisfying(Coordinate.class, coordinate -> {
+				assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(expectedLatitude,
+						EPSILON);
+				assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isCloseTo(expectedLongitude,
+						EPSILON);
+			});
 		}
 
 		/**
