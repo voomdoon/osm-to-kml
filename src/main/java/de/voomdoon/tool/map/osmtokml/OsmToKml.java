@@ -54,7 +54,7 @@ public class OsmToKml {
 
 			new OsmConverter(document).convert(osmData);
 
-			String outputFile = output + "/" + new File(input).getName().replace(".pbf", ".kml");
+			String outputFile = output + "/default.kml";
 			logger.debug("Writing KML file: " + outputFile);
 			new File(output).mkdirs();
 			new KmlWriter().write(kml, outputFile);

@@ -258,7 +258,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			osmToKml.run();
 
-			String outputFile = output + "/" + input.getName().replace(".pbf", ".kml");
+			String outputFile = output + "/default.kml";
 
 			logger.debug("output:\n" + Files.readString(Path.of(outputFile)));
 
