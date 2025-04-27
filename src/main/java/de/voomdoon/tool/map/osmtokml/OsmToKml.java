@@ -2,7 +2,12 @@ package de.voomdoon.tool.map.osmtokml;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
 import de.micromata.opengis.kml.v_2_2_0.Document;
 import de.micromata.opengis.kml.v_2_2_0.Kml;
@@ -45,20 +50,39 @@ public class OsmToKml {
 	public void run() throws IOException, InvalidInputFileException {
 		validate();
 
+		List<OsmData> osmDatas = new ArrayList<>();
+
 		for (String input : inputs) {
 			OsmData osmData = new OsmReader().read(input);
-
-			Kml kml = new Kml();
-			Document document = new Document();
-			kml.setFeature(document);
-
-			new OsmConverter(document).convert(osmData);
-
-			String outputFile = output + "/default.kml";
-			logger.debug("Writing KML file: " + outputFile);
-			new File(output).mkdirs();
-			new KmlWriter().write(kml, outputFile);
+			osmDatas.add(osmData);
 		}
+
+		Kml kml = new Kml();
+		Document document = new Document();
+		kml.setFeature(document);
+
+		OsmData osmData = new OsmData() {
+
+			@Override
+			public Map<Long, Node> getNodes() {
+				Map<Long, Node> result = new HashMap<>();
+
+				osmDatas.forEach(data -> {
+					data.getNodes().forEach((key, value) -> {
+						result.put(key, value);
+					});
+				});
+
+				return result;
+			}
+		};
+
+		new OsmConverter(document).convert(osmData);
+
+		String outputFile = output + "/default.kml";
+		logger.debug("Writing KML file: " + outputFile);
+		new File(output).mkdirs();
+		new KmlWriter().write(kml, outputFile);
 	}
 
 	/**

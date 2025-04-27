@@ -1,5 +1,8 @@
 package de.voomdoon.tool.map.osmtokml;
 
+import java.util.Iterator;
+import java.util.Map.Entry;
+
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
 import de.micromata.opengis.kml.v_2_2_0.Document;
@@ -37,11 +40,15 @@ public class OsmConverter {
 	 * @since 0.1.0
 	 */
 	public void convert(OsmData osmData) {
-		Placemark placemark = new Placemark();
-		Point point = new Point();
-		Node node = osmData.getNodes().entrySet().iterator().next().getValue();
-		point.addToCoordinates(node.getLongitude(), node.getLatitude());
-		placemark.setGeometry(point);
-		document.addToFeature(placemark);
+		Iterator<Entry<Long, Node>> iterator = osmData.getNodes().entrySet().iterator();
+
+		while (iterator.hasNext()) {
+			Placemark placemark = new Placemark();
+			Point point = new Point();
+			Node node = iterator.next().getValue();
+			point.addToCoordinates(node.getLongitude(), node.getLatitude());
+			placemark.setGeometry(point);
+			document.addToFeature(placemark);
+		}
 	}
 }

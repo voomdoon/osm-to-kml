@@ -13,6 +13,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -104,13 +106,29 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
+		void test_input_multiple_output_single(@TempInputFile File input1, @TempInputFile File input2,
+				@TempOutputDirectory File output) throws Exception {
+			logTestStart();
+
+			withInputs(Map.of(input1, "node_1566942192.osm.pbf", input2, "node_8400710442.osm.pbf"));
+
+			Kml actual = run(output);
+
+			assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
+					.hasSize(2);
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
 		void test_output_nodeBecomesPlacemark(@TempInputFile File input, @TempOutputDirectory File output)
 				throws Exception {
 			logTestStart();
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output, input);
+			Kml actual = run(output);
 
 			assertPlacemark(actual);
 		}
@@ -125,7 +143,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output, input);
+			Kml actual = run(output);
 
 			assertPoint(actual);
 		}
@@ -140,7 +158,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output, input);
+			Kml actual = run(output);
 
 			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
 					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
@@ -156,7 +174,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			withInputs(input, "node_8400710442.osm.pbf");
 
-			Kml actual = run(output, input);
+			Kml actual = run(output);
 
 			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
 					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5186776, 13.4075684);
@@ -172,7 +190,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output, input);
+			Kml actual = run(output);
 
 			assertDocument(actual);
 		}
@@ -186,7 +204,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			withInputs(input, "node_1566942192.osm.pbf");
 
-			Kml actual = run(output, input);
+			Kml actual = run(output);
 
 			assertThat(actual).isNotNull();
 		}
@@ -247,13 +265,12 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * DOCME add JavaDoc for method run
 		 * 
 		 * @param output
-		 * @param input
 		 * @return
 		 * @throws IOException
 		 * @throws InvalidInputFileException
 		 * @since 0.1.0
 		 */
-		private Kml run(File output, File input) throws IOException, InvalidInputFileException {
+		private Kml run(File output) throws IOException, InvalidInputFileException {
 			osmToKml.withOutput(output.getAbsolutePath());
 
 			osmToKml.run();
@@ -277,6 +294,21 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			copyResourceToInputFile(resource, input);
 
 			osmToKml.withInputs(List.of(input.getAbsolutePath()));
+		}
+
+		/**
+		 * DOCME add JavaDoc for method withInputs
+		 * 
+		 * @param inputsWithResource
+		 * @throws InvalidInputFileException
+		 * @since 0.1.0
+		 */
+		private void withInputs(Map<File, String> inputsWithResource) throws InvalidInputFileException {
+			for (Entry<File, String> entry : inputsWithResource.entrySet()) {
+				copyResourceToInputFile(entry.getValue(), entry.getKey());
+			}
+
+			osmToKml.withInputs(inputsWithResource.keySet().stream().map(File::getAbsolutePath).toList());
 		}
 	}
 
