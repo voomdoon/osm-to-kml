@@ -73,7 +73,7 @@ public class OsmToKml {
 				}
 			};
 
-			new OsmConverter(document).convert(osmData);
+			new OsmToKmlConverter(document).convert(osmData);
 
 			File outputFile = new File(getOutputFile(input));
 			logger.debug("Writing KML file: " + outputFile);

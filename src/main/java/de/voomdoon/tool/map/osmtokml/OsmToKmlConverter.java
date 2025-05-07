@@ -16,7 +16,7 @@ import de.micromata.opengis.kml.v_2_2_0.Point;
  *
  * @since 0.1.0
  */
-public class OsmConverter {
+public class OsmToKmlConverter {
 
 	/**
 	 * @since 0.1.0
@@ -29,7 +29,7 @@ public class OsmConverter {
 	 * @param document
 	 * @since 0.1.0
 	 */
-	public OsmConverter(Document document) {
+	public OsmToKmlConverter(Document document) {
 		this.document = document;
 	}
 
