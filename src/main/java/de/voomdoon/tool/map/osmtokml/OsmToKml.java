@@ -50,39 +50,36 @@ public class OsmToKml {
 	public void run() throws IOException, InvalidInputFileException {
 		validate();
 
-		List<OsmData> osmDatas = new ArrayList<>();
-
 		for (String input : inputs) {
-			OsmData osmData = new OsmReader().read(input);
-			osmDatas.add(osmData);
-		}
+			List<OsmData> osmDatas = read(input);
 
-		Kml kml = new Kml();
-		Document document = new Document();
-		kml.setFeature(document);
+			Kml kml = new Kml();
+			Document document = new Document();
+			kml.setFeature(document);
 
-		OsmData osmData = new OsmData() {
+			OsmData osmData = new OsmData() {
 
-			@Override
-			public Map<Long, Node> getNodes() {
-				Map<Long, Node> result = new HashMap<>();
+				@Override
+				public Map<Long, Node> getNodes() {
+					Map<Long, Node> result = new HashMap<>();
 
-				osmDatas.forEach(data -> {
-					data.getNodes().forEach((key, value) -> {
-						result.put(key, value);
+					osmDatas.forEach(data -> {
+						data.getNodes().forEach((key, value) -> {
+							result.put(key, value);
+						});
 					});
-				});
 
-				return result;
-			}
-		};
+					return result;
+				}
+			};
 
-		new OsmConverter(document).convert(osmData);
+			new OsmConverter(document).convert(osmData);
 
-		String outputFile = output + "/default.kml";
-		logger.debug("Writing KML file: " + outputFile);
-		new File(output).mkdirs();
-		new KmlWriter().write(kml, outputFile);
+			File outputFile = new File(getOutputFile(input));
+			logger.debug("Writing KML file: " + outputFile);
+			outputFile.getParentFile().mkdirs();
+			new KmlWriter().write(kml, outputFile.getAbsolutePath());
+		}
 	}
 
 	/**
@@ -94,13 +91,19 @@ public class OsmToKml {
 	 * @since 0.1.0
 	 */
 	public OsmToKml withInputs(List<String> inputs) throws InvalidInputFileException {
+		logger.trace("withInputs " + inputs);
+
 		if (inputs.isEmpty()) {
 			throw new IllegalArgumentException("Argument 'inputs' must not be empty");
 		}
 
 		for (String input : inputs) {
 			if (!input.endsWith(".pbf")) {
-				throw new InvalidInputFileException("Expecting PBF input file, but got: " + input);
+				File file = new File(input);
+
+				if (!file.isDirectory()) {
+					throw new InvalidInputFileException("Expecting PBF input file, but got: " + input);
+				}
 			}
 		}
 
@@ -117,9 +120,54 @@ public class OsmToKml {
 	 * @since 0.1.0
 	 */
 	public OsmToKml withOutput(String output) {
+		logger.trace("withOutput " + output);
+
 		this.output = output;
 
 		return this;
+	}
+
+	/**
+	 * DOCME add JavaDoc for method getOutputFile
+	 * 
+	 * @param input
+	 * @return
+	 * @since 0.1.0
+	 */
+	private String getOutputFile(String input) {
+		if (inputs.size() > 1) {
+			String name = new File(input).getName();
+			name = name.substring(0, name.length() - 8);
+
+			return output + "/" + name + ".kml";
+		}
+
+		return output + "/default.kml";
+	}
+
+	/**
+	 * DOCME add JavaDoc for method read
+	 * 
+	 * @param input
+	 * 
+	 * @return
+	 * @since 0.1.0
+	 */
+	private List<OsmData> read(String input) {
+		List<OsmData> osmDatas = new ArrayList<>();
+		File file = new File(input);
+
+		if (file.isFile()) {
+			OsmData osmData = new OsmReader().read(input);
+			osmDatas.add(osmData);
+		} else {
+			for (File f : file.listFiles()) {
+				OsmData osmData = new OsmReader().read(f.getAbsolutePath());
+				osmDatas.add(osmData);
+			}
+		}
+
+		return osmDatas;
 	}
 
 	/**

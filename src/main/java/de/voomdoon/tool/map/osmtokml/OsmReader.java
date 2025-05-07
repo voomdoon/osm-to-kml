@@ -80,6 +80,11 @@ public class OsmReader {
 	}
 
 	/**
+	 * @since 0.1.0
+	 */
+	private final Logger logger = LogManager.getLogger(getClass());
+
+	/**
 	 * DOCME add JavaDoc for method read
 	 * 
 	 * @param input
@@ -87,6 +92,8 @@ public class OsmReader {
 	 * @since 0.1.0
 	 */
 	public OsmData read(String input) {
+		logger.trace("read " + input);
+
 		File file = new File(input);
 		OsmosisReader reader = new OsmosisReader(file);
 		EntitySink sink = new EntitySink();

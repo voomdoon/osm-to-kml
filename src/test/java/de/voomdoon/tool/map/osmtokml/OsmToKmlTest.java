@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,6 +31,7 @@ import de.micromata.opengis.kml.v_2_2_0.Placemark;
 import de.micromata.opengis.kml.v_2_2_0.Point;
 import de.voomdoon.logging.LogLevel;
 import de.voomdoon.testing.file.TempFileExtension;
+import de.voomdoon.testing.file.TempInputDirectory;
 import de.voomdoon.testing.file.TempInputFile;
 import de.voomdoon.testing.file.TempOutputDirectory;
 import de.voomdoon.testing.file.WithTempInputFiles;
@@ -56,20 +56,41 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	 */
 	@Nested
 	@ExtendWith(TempFileExtension.class)
-	@WithTempInputFiles(extension = "pbf")
+	@WithTempInputFiles(extension = "osm.pbf")
 	class InputOutputMappingTest extends TestBase {
 
 		/**
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_input_multiple_output_single(@TempInputFile File input1, @TempInputFile File input2,
-				@TempOutputDirectory File output) throws Exception {
+		void test_input_multipleFiles_output_singleDirectory_resultsInMultipleFiles(@TempInputFile File inputFile1,
+				@TempInputFile File inputFile2, @TempOutputDirectory File outputDirectory) throws Exception {
 			logTestStart();
 
-			withInputs(Map.of(input1, "node_1566942192.osm.pbf", input2, "node_8400710442.osm.pbf"));
+			withInputs(Map.of(inputFile1, "node_1566942192.osm.pbf", inputFile2, "node_8400710442.osm.pbf"));
 
-			Kml actual = run(output);
+			run(outputDirectory);
+
+			assertThat(outputDirectory).isDirectoryContaining(file -> file.getName()
+					.equals(inputFile1.getName().substring(0, inputFile1.getName().indexOf('.')) + ".kml"));
+			assertThat(outputDirectory).isDirectoryContaining(file -> file.getName()
+					.equals(inputFile2.getName().substring(0, inputFile2.getName().indexOf('.')) + ".kml"));
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_input_singleDirectoryWithMultipleFiles_output_singleDirectory_resultsInSingleFile(
+				@TempInputDirectory File inputDirectory, @TempOutputDirectory File outputDirectory) throws Exception {
+			logTestStart();
+
+			inputDirectory.mkdirs();
+			copyResourceToInputFile("node_1566942192.osm.pbf", new File(inputDirectory + "/1.osm.pbf"));
+			copyResourceToInputFile("node_8400710442.osm.pbf", new File(inputDirectory + "/2.osm.pbf"));
+			osmToKml.withInputs(List.of(inputDirectory.getAbsolutePath()));
+
+			Kml actual = run(outputDirectory);
 
 			assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
 					.hasSize(2);
@@ -345,11 +366,15 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			osmToKml.run();
 
-			String outputFile = output + "/default.kml";
+			File outputFile = new File(output + "/default.kml");
 
-			logger.debug("output:\n" + Files.readString(Path.of(outputFile)));
+			if (!outputFile.isFile()) {
+				return null;
+			}
 
-			return new KmlReader().read(outputFile);
+			logger.debug("output:\n" + Files.readString(outputFile.toPath()));
+
+			return new KmlReader().read(outputFile.getAbsolutePath());
 		}
 
 		/**
@@ -398,8 +423,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	 * @since 0.1.0
 	 */
 	public static void copyResourceToInputFile(String resource, File input) {
-		try (InputStream inputStream = OsmToKmlTestV1_refactor_extractTestBase.class
-				.getResourceAsStream("/input/" + resource)) {
+		try (InputStream inputStream = OsmToKmlTest.class.getResourceAsStream("/input/" + resource)) {
 			try {
 				Files.copy(inputStream, input.toPath());
 			} catch (IOException e) {
