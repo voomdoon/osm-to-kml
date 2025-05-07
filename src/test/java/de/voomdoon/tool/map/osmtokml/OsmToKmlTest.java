@@ -36,11 +36,10 @@ import de.voomdoon.testing.file.TempInputFile;
 import de.voomdoon.testing.file.TempOutputDirectory;
 import de.voomdoon.testing.file.WithTempInputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
-import de.voomdoon.testing.tests.TestBase;
 import de.voomdoon.util.kml.io.KmlReader;
 
 /**
- * DOCME add JavaDoc for
+ * Tests for {@link OsmToKml}.
  *
  * @author André Schulz
  *
@@ -49,7 +48,36 @@ import de.voomdoon.util.kml.io.KmlReader;
 class OsmToKmlTest extends LoggingCheckingTestBase {
 
 	/**
-	 * Tests for {@link OsmToKml}.
+	 * DOCME add JavaDoc for OsmToKmlTest
+	 *
+	 * @author André Schulz
+	 *
+	 * @since 0.1.0
+	 */
+	@Nested
+	@ExtendWith(TempFileExtension.class)
+	@WithTempInputFiles(extension = "pbf")
+	class InputOutputMappingTest extends TestBase {
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_input_multiple_output_single(@TempInputFile File input1, @TempInputFile File input2,
+				@TempOutputDirectory File output) throws Exception {
+			logTestStart();
+
+			withInputs(Map.of(input1, "node_1566942192.osm.pbf", input2, "node_8400710442.osm.pbf"));
+
+			Kml actual = run(output);
+
+			assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
+					.hasSize(2);
+		}
+	}
+
+	/**
+	 * Tests for {@link OsmToKml#run()}.
 	 *
 	 * @author André Schulz
 	 *
@@ -64,19 +92,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		private static final Offset<Double> EPSILON = within(1E-7);
-
-		/**
-		 * @since 0.1.0
-		 */
-		private OsmToKml osmToKml = new OsmToKml();
-
-		/**
-		 * @since 0.1.0
-		 */
-		@AfterEach
-		void afterEach_removeAcceptedLogging() {
-			OsmToKmlTest.this.getLogCache().removeEvents(LogLevel.WARN, Pattern.compile(".*not implemented.*"));
-		}
 
 		/**
 		 * @since 0.1.0
@@ -100,22 +115,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			assertThatThrownBy(() -> osmToKml.run())//
 					.isInstanceOf(IllegalStateException.class).hasMessageContaining("output");
-		}
-
-		/**
-		 * @since 0.1.0
-		 */
-		@Test
-		void test_input_multiple_output_single(@TempInputFile File input1, @TempInputFile File input2,
-				@TempOutputDirectory File output) throws Exception {
-			logTestStart();
-
-			withInputs(Map.of(input1, "node_1566942192.osm.pbf", input2, "node_8400710442.osm.pbf"));
-
-			Kml actual = run(output);
-
-			assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
-					.hasSize(2);
 		}
 
 		/**
@@ -230,17 +229,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		/**
 		 * @param actual
 		 *            {@link Kml}
-		 * @return {@link ObjectAssert} for {@link Document}
-		 * @since 0.1.0
-		 */
-		private ObjectAssert<Document> assertDocument(Kml actual) {
-			return assertThat(actual).extracting(Kml::getFeature).describedAs("root feature")
-					.isInstanceOf(Document.class).asInstanceOf(InstanceOfAssertFactories.type(Document.class));
-		}
-
-		/**
-		 * @param actual
-		 *            {@link Kml}
 		 * @return {@link ObjectAssert} for single {@link Placemark}
 		 * @since 0.1.0
 		 */
@@ -261,55 +249,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 					.isInstanceOf(Point.class).asInstanceOf(InstanceOfAssertFactories.type(Point.class));
 		}
 
-		/**
-		 * DOCME add JavaDoc for method run
-		 * 
-		 * @param output
-		 * @return
-		 * @throws IOException
-		 * @throws InvalidInputFileException
-		 * @since 0.1.0
-		 */
-		private Kml run(File output) throws IOException, InvalidInputFileException {
-			osmToKml.withOutput(output.getAbsolutePath());
-
-			osmToKml.run();
-
-			String outputFile = output + "/default.kml";
-
-			logger.debug("output:\n" + Files.readString(Path.of(outputFile)));
-
-			return new KmlReader().read(outputFile);
-		}
-
-		/**
-		 * DOCME add JavaDoc for method withInputs
-		 * 
-		 * @param input
-		 * @param resource
-		 * @throws InvalidInputFileException
-		 * @since 0.1.0
-		 */
-		private void withInputs(File input, String resource) throws InvalidInputFileException {
-			copyResourceToInputFile(resource, input);
-
-			osmToKml.withInputs(List.of(input.getAbsolutePath()));
-		}
-
-		/**
-		 * DOCME add JavaDoc for method withInputs
-		 * 
-		 * @param inputsWithResource
-		 * @throws InvalidInputFileException
-		 * @since 0.1.0
-		 */
-		private void withInputs(Map<File, String> inputsWithResource) throws InvalidInputFileException {
-			for (Entry<File, String> entry : inputsWithResource.entrySet()) {
-				copyResourceToInputFile(entry.getValue(), entry.getKey());
-			}
-
-			osmToKml.withInputs(inputsWithResource.keySet().stream().map(File::getAbsolutePath).toList());
-		}
 	}
 
 	/**
@@ -323,11 +262,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	@ExtendWith(TempFileExtension.class)
 	@WithTempInputFiles(extension = "pbf")
 	class WithInputsTets extends TestBase {
-
-		/**
-		 * @since 0.1.0
-		 */
-		private OsmToKml osmToKml = new OsmToKml();
 
 		/**
 		 * @since 0.1.0
@@ -364,16 +298,95 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		/**
 		 * @since 0.1.0
 		 */
-		private OsmToKml osmToKml = new OsmToKml();
-
-		/**
-		 * @since 0.1.0
-		 */
 		@Test
 		void test_success(@TempOutputDirectory String input) throws Exception {
 			logTestStart();
 
 			assertDoesNotThrow(() -> osmToKml.withOutput(input));
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for OsmToKmlTest
+	 *
+	 * @author André Schulz
+	 *
+	 * @since 0.1.0
+	 */
+	private class TestBase extends de.voomdoon.testing.tests.TestBase {
+
+		/**
+		 * @since 0.1.0
+		 */
+		protected OsmToKml osmToKml = new OsmToKml();
+
+		/**
+		 * @param actual
+		 *            {@link Kml}
+		 * @return {@link ObjectAssert} for {@link Document}
+		 * @since 0.1.0
+		 */
+		protected ObjectAssert<Document> assertDocument(Kml actual) {
+			return assertThat(actual).extracting(Kml::getFeature).describedAs("root feature")
+					.isInstanceOf(Document.class).asInstanceOf(InstanceOfAssertFactories.type(Document.class));
+		}
+
+		/**
+		 * DOCME add JavaDoc for method run
+		 * 
+		 * @param output
+		 * @return
+		 * @throws IOException
+		 * @throws InvalidInputFileException
+		 * @since 0.1.0
+		 */
+		protected Kml run(File output) throws IOException, InvalidInputFileException {
+			osmToKml.withOutput(output.getAbsolutePath());
+
+			osmToKml.run();
+
+			String outputFile = output + "/default.kml";
+
+			logger.debug("output:\n" + Files.readString(Path.of(outputFile)));
+
+			return new KmlReader().read(outputFile);
+		}
+
+		/**
+		 * DOCME add JavaDoc for method withInputs
+		 * 
+		 * @param input
+		 * @param resource
+		 * @throws InvalidInputFileException
+		 * @since 0.1.0
+		 */
+		protected void withInputs(File input, String resource) throws InvalidInputFileException {
+			copyResourceToInputFile(resource, input);
+
+			osmToKml.withInputs(List.of(input.getAbsolutePath()));
+		}
+
+		/**
+		 * DOCME add JavaDoc for method withInputs
+		 * 
+		 * @param inputsWithResource
+		 * @throws InvalidInputFileException
+		 * @since 0.1.0
+		 */
+		protected void withInputs(Map<File, String> inputsWithResource) throws InvalidInputFileException {
+			for (Entry<File, String> entry : inputsWithResource.entrySet()) {
+				copyResourceToInputFile(entry.getValue(), entry.getKey());
+			}
+
+			osmToKml.withInputs(inputsWithResource.keySet().stream().map(File::getAbsolutePath).toList());
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@AfterEach
+		void afterEach_removeAcceptedLogging() {
+			OsmToKmlTest.this.getLogCache().removeEvents(LogLevel.WARN, Pattern.compile(".*not implemented.*"));
 		}
 	}
 
@@ -385,7 +398,8 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	 * @since 0.1.0
 	 */
 	public static void copyResourceToInputFile(String resource, File input) {
-		try (InputStream inputStream = OsmToKmlTest.class.getResourceAsStream("/input/" + resource)) {
+		try (InputStream inputStream = OsmToKmlTestV1_refactor_extractTestBase.class
+				.getResourceAsStream("/input/" + resource)) {
 			try {
 				Files.copy(inputStream, input.toPath());
 			} catch (IOException e) {
