@@ -8,6 +8,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.DOUBLE;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -36,6 +37,7 @@ import de.voomdoon.testing.file.TempInputFile;
 import de.voomdoon.testing.file.TempOutputDirectory;
 import de.voomdoon.testing.file.WithTempInputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
+import de.voomdoon.util.file.FileTreeFormatter;
 import de.voomdoon.util.kml.io.KmlReader;
 
 /**
@@ -112,7 +114,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			runDirectory(outputDirectory);
 
-			Kml actual = new KmlReader().read(outputDirectory + "/test-pipeline.kml");
+			Kml actual = read(outputDirectory, "test-pipeline.kml");
 
 			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
 					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
@@ -388,20 +390,38 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		}
 
 		/**
+		 * DOCME add JavaDoc for method read
+		 * 
+		 * @param outputDirectory
+		 * @param file
+		 * @return
+		 * @throws IOException
+		 * @since DOCME add inception version number
+		 */
+		protected Kml read(File outputDirectory, String file) throws IOException {
+			try {
+				return new KmlReader().read(outputDirectory + "/" + file);
+			} catch (FileNotFoundException e) {
+				throw new FileNotFoundException(
+						e.getMessage() + "\n" + new FileTreeFormatter().format(outputDirectory));
+			}
+		}
+
+		/**
 		 * DOCME add JavaDoc for method run
 		 * 
-		 * @param output
+		 * @param outputDirectory
 		 * @return
 		 * @throws IOException
 		 * @throws InvalidInputFileException
 		 * @since 0.1.0
 		 */
-		protected Kml run(File output) throws IOException, InvalidInputFileException {
-			osmToKml.withOutput(output.getAbsolutePath());
+		protected Kml run(File outputDirectory) throws IOException, InvalidInputFileException {
+			osmToKml.withOutput(outputDirectory.getAbsolutePath());
 
 			osmToKml.run();
 
-			File outputFile = new File(output + "/default.kml");
+			File outputFile = new File(outputDirectory + "/default.kml");
 
 			if (!outputFile.isFile()) {
 				return null;
@@ -409,7 +429,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			logger.debug("output:\n" + Files.readString(outputFile.toPath()));
 
-			return new KmlReader().read(outputFile.getAbsolutePath());
+			return read(outputDirectory, "default.kml");
 		}
 
 		/**
