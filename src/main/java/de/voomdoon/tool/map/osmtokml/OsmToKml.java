@@ -40,6 +40,13 @@ public class OsmToKml {
 	private String output;
 
 	/**
+	 * TODO make mandatory and remove default
+	 * 
+	 * @since 0.1.0
+	 */
+	private List<OsmToKmlPipeline> pipelines = List.of(new OsmToKmlPipeline().setName("default"));
+
+	/**
 	 * DOCME add JavaDoc for method run
 	 * 
 	 * @throws IOException
@@ -51,34 +58,36 @@ public class OsmToKml {
 		validate();
 
 		for (String input : inputs) {
-			List<OsmData> osmDatas = read(input);
+			for (OsmToKmlPipeline pipeline : pipelines) {
+				List<OsmData> osmDatas = read(input);
 
-			Kml kml = new Kml();
-			Document document = new Document();
-			kml.setFeature(document);
+				Kml kml = new Kml();
+				Document document = new Document();
+				kml.setFeature(document);
 
-			OsmData osmData = new OsmData() {
+				OsmData osmData = new OsmData() {
 
-				@Override
-				public Map<Long, Node> getNodes() {
-					Map<Long, Node> result = new HashMap<>();
+					@Override
+					public Map<Long, Node> getNodes() {
+						Map<Long, Node> result = new HashMap<>();
 
-					osmDatas.forEach(data -> {
-						data.getNodes().forEach((key, value) -> {
-							result.put(key, value);
+						osmDatas.forEach(data -> {
+							data.getNodes().forEach((key, value) -> {
+								result.put(key, value);
+							});
 						});
-					});
 
-					return result;
-				}
-			};
+						return result;
+					}
+				};
 
-			new OsmToKmlConverter(document).convert(osmData);
+				new OsmToKmlConverter(document).convert(osmData);
 
-			File outputFile = new File(getOutputFile(input));
-			logger.debug("Writing KML file: " + outputFile);
-			outputFile.getParentFile().mkdirs();
-			new KmlWriter().write(kml, outputFile.getAbsolutePath());
+				File outputFile = new File(getOutputFile(input, pipeline));
+				logger.debug("Writing KML file: " + outputFile);
+				outputFile.getParentFile().mkdirs();
+				new KmlWriter().write(kml, outputFile.getAbsolutePath());
+			}
 		}
 	}
 
@@ -128,13 +137,26 @@ public class OsmToKml {
 	}
 
 	/**
+	 * DOCME add JavaDoc for method withPipelines
+	 * 
+	 * @param pipelines
+	 * @since 0.1.0
+	 */
+	public void withPipelines(List<OsmToKmlPipeline> pipelines) {
+		this.pipelines = pipelines;
+	}
+
+	/**
 	 * DOCME add JavaDoc for method getOutputFile
 	 * 
 	 * @param input
+	 * @param pipeline
 	 * @return
 	 * @since 0.1.0
 	 */
-	private String getOutputFile(String input) {
+	private String getOutputFile(String input, OsmToKmlPipeline pipeline) {
+		logger.debug("getOutputFile " + input + " " + pipeline.getName());
+
 		if (inputs.size() > 1) {
 			String name = new File(input).getName();
 			name = name.substring(0, name.length() - 8);
@@ -142,7 +164,7 @@ public class OsmToKml {
 			return output + "/" + name + ".kml";
 		}
 
-		return output + "/default.kml";
+		return output + "/" + pipeline.getName() + ".kml";
 	}
 
 	/**

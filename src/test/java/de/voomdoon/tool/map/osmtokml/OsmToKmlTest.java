@@ -63,7 +63,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_input_multipleFiles_output_singleDirectory_resultsInMultipleFiles(@TempInputFile File inputFile1,
+		void test_inputMultipleFiles_outputSingleDirectory_resultsInMultipleFiles(@TempInputFile File inputFile1,
 				@TempInputFile File inputFile2, @TempOutputDirectory File outputDirectory) throws Exception {
 			logTestStart();
 
@@ -81,7 +81,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_input_singleDirectoryWithMultipleFiles_output_singleDirectory_resultsInSingleFile(
+		void test_inputSingleDirectoryWithMultipleFiles_outputSingleDirectory_resultsInSingleFile(
 				@TempInputDirectory File inputDirectory, @TempOutputDirectory File outputDirectory) throws Exception {
 			logTestStart();
 
@@ -94,6 +94,42 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
 					.hasSize(2);
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_inputSingleFile_onePipeline_outputSingleDirectory_resultsInOneFile(@TempInputFile File inputFile,
+				@TempOutputDirectory File outputDirectory) throws Exception {
+			logTestStart();
+
+			OsmToKmlPipeline pipeline = new OsmToKmlPipeline();
+			pipeline.setName("test-pipeline");
+
+			withInputs(Map.of(inputFile, "node_1566942192.osm.pbf"));
+			osmToKml.withPipelines(List.of(pipeline));
+
+			runDirectory(outputDirectory);
+
+			Kml actual = new KmlReader().read(outputDirectory + "/test-pipeline.kml");
+
+			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
+					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
+		}
+
+		/**
+		 * DOCME add JavaDoc for method runDirectory
+		 * 
+		 * @param outputDirectory
+		 * @throws InvalidInputFileException
+		 * @throws IOException
+		 * @since 0.1.0
+		 */
+		private void runDirectory(File output) throws IOException, InvalidInputFileException {
+			osmToKml.withOutput(output.getAbsolutePath());
+
+			osmToKml.run();
 		}
 	}
 
@@ -108,11 +144,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	@ExtendWith(TempFileExtension.class)
 	@WithTempInputFiles(extension = "pbf")
 	class RunTest extends TestBase {
-
-		/**
-		 * @since 0.1.0
-		 */
-		private static final Offset<Double> EPSILON = within(1E-7);
 
 		/**
 		 * @since 0.1.0
@@ -228,48 +259,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			assertThat(actual).isNotNull();
 		}
-
-		/**
-		 * DOCME add JavaDoc for method assertCoordinate
-		 * 
-		 * @param coordinateAssert
-		 * @param expectedLatitude
-		 * @param expectedLongitude
-		 * @since 0.1.0
-		 */
-		private void assertCoordinate(ObjectAssert<? extends Object> coordinateAssert, double expectedLatitude,
-				double expectedLongitude) {
-			coordinateAssert.isInstanceOfSatisfying(Coordinate.class, coordinate -> {
-				assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(expectedLatitude,
-						EPSILON);
-				assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isCloseTo(expectedLongitude,
-						EPSILON);
-			});
-		}
-
-		/**
-		 * @param actual
-		 *            {@link Kml}
-		 * @return {@link ObjectAssert} for single {@link Placemark}
-		 * @since 0.1.0
-		 */
-		private ObjectAssert<Placemark> assertPlacemark(Kml actual) {
-			return assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
-					.singleElement().isInstanceOf(Placemark.class)
-					.asInstanceOf(InstanceOfAssertFactories.type(Placemark.class));
-		}
-
-		/**
-		 * @param actual
-		 *            {@link Kml}
-		 * @return {@link ObjectAssert} for {@link Point} of first {@link Placemark}
-		 * @since 0.1.0
-		 */
-		private ObjectAssert<Point> assertPoint(Kml actual) {
-			return assertPlacemark(actual).extracting(Placemark::getGeometry).describedAs("geometry")
-					.isInstanceOf(Point.class).asInstanceOf(InstanceOfAssertFactories.type(Point.class));
-		}
-
 	}
 
 	/**
@@ -339,7 +328,30 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		/**
 		 * @since 0.1.0
 		 */
+		private static final Offset<Double> EPSILON = within(1E-7);
+
+		/**
+		 * @since 0.1.0
+		 */
 		protected OsmToKml osmToKml = new OsmToKml();
+
+		/**
+		 * DOCME add JavaDoc for method assertCoordinate
+		 * 
+		 * @param coordinateAssert
+		 * @param expectedLatitude
+		 * @param expectedLongitude
+		 * @since 0.1.0
+		 */
+		protected void assertCoordinate(ObjectAssert<? extends Object> coordinateAssert, double expectedLatitude,
+				double expectedLongitude) {
+			coordinateAssert.isInstanceOfSatisfying(Coordinate.class, coordinate -> {
+				assertThat(coordinate).extracting(Coordinate::getLatitude, as(DOUBLE)).isCloseTo(expectedLatitude,
+						EPSILON);
+				assertThat(coordinate).extracting(Coordinate::getLongitude, as(DOUBLE)).isCloseTo(expectedLongitude,
+						EPSILON);
+			});
+		}
 
 		/**
 		 * @param actual
@@ -350,6 +362,29 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		protected ObjectAssert<Document> assertDocument(Kml actual) {
 			return assertThat(actual).extracting(Kml::getFeature).describedAs("root feature")
 					.isInstanceOf(Document.class).asInstanceOf(InstanceOfAssertFactories.type(Document.class));
+		}
+
+		/**
+		 * @param actual
+		 *            {@link Kml}
+		 * @return {@link ObjectAssert} for single {@link Placemark}
+		 * @since 0.1.0
+		 */
+		protected ObjectAssert<Placemark> assertPlacemark(Kml actual) {
+			return assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
+					.singleElement().isInstanceOf(Placemark.class)
+					.asInstanceOf(InstanceOfAssertFactories.type(Placemark.class));
+		}
+
+		/**
+		 * @param actual
+		 *            {@link Kml}
+		 * @return {@link ObjectAssert} for {@link Point} of first {@link Placemark}
+		 * @since 0.1.0
+		 */
+		protected ObjectAssert<Point> assertPoint(Kml actual) {
+			return assertPlacemark(actual).extracting(Placemark::getGeometry).describedAs("geometry")
+					.isInstanceOf(Point.class).asInstanceOf(InstanceOfAssertFactories.type(Point.class));
 		}
 
 		/**
