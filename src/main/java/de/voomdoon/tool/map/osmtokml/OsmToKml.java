@@ -59,27 +59,11 @@ public class OsmToKml {
 
 		for (String input : inputs) {
 			for (OsmToKmlPipeline pipeline : pipelines) {
-				List<OsmData> osmDatas = read(input);
+				OsmData osmData = read(input);
 
 				Kml kml = new Kml();
 				Document document = new Document();
 				kml.setFeature(document);
-
-				OsmData osmData = new OsmData() {
-
-					@Override
-					public Map<Long, Node> getNodes() {
-						Map<Long, Node> result = new HashMap<>();
-
-						osmDatas.forEach(data -> {
-							data.getNodes().forEach((key, value) -> {
-								result.put(key, value);
-							});
-						});
-
-						return result;
-					}
-				};
 
 				new OsmToKmlConverter(document).convert(osmData);
 
@@ -168,6 +152,33 @@ public class OsmToKml {
 	}
 
 	/**
+	 * DOCME add JavaDoc for method joinOsmDatas
+	 * 
+	 * @param osmDatas
+	 * @return
+	 * @since 0.1.0
+	 */
+	private OsmData joinOsmDatas(List<OsmData> osmDatas) {
+		OsmData osmData = new OsmData() {
+
+			@Override
+			public Map<Long, Node> getNodes() {
+				Map<Long, Node> result = new HashMap<>();
+
+				osmDatas.forEach(data -> {
+					data.getNodes().forEach((key, value) -> {
+						result.put(key, value);
+					});
+				});
+
+				return result;
+			}
+		};
+
+		return osmData;
+	}
+
+	/**
 	 * DOCME add JavaDoc for method read
 	 * 
 	 * @param input
@@ -175,7 +186,7 @@ public class OsmToKml {
 	 * @return
 	 * @since 0.1.0
 	 */
-	private List<OsmData> read(String input) {
+	private OsmData read(String input) {
 		List<OsmData> osmDatas = new ArrayList<>();
 		File file = new File(input);
 
@@ -189,7 +200,7 @@ public class OsmToKml {
 			}
 		}
 
-		return osmDatas;
+		return joinOsmDatas(osmDatas);
 	}
 
 	/**
