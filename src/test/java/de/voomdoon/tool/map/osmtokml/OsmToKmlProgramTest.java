@@ -58,6 +58,7 @@ class OsmToKmlProgramTest {
 		@AfterEach
 		void afterEach_removeAcceptedLogging() {
 			getLogCache().removeEvents(LogLevel.WARN, Pattern.compile(".*not implemented.*"));
+			getLogCache().removeEvents(LogLevel.WARN, Pattern.compile(".*running default pipeline.*"));
 		}
 
 		/**

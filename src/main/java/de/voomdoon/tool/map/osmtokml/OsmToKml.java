@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.openstreetmap.osmosis.core.domain.v0_6.Node;
 
@@ -25,6 +26,61 @@ import de.voomdoon.util.kml.io.KmlWriter;
 public class OsmToKml {
 
 	/**
+	 * DOCME add JavaDoc for OsmToKml
+	 *
+	 * @author André Schulz
+	 *
+	 * @since 0.1.0
+	 */
+	private class InputCollector {
+
+		/**
+		 * DOCME add JavaDoc for method getAggregatedinputData
+		 * 
+		 * @return
+		 * @since 0.1.0
+		 */
+		private List<InputData> getAggregatedInputData() {
+			List<OsmData> osmDatas = new ArrayList<>();
+
+			for (String input : inputs) {
+				OsmData osmData = read(input);
+				osmDatas.add(osmData);
+			}
+
+			OsmData joinedData = joinOsmDatas(osmDatas);
+
+			return List.of(new InputData(joinedData));
+		}
+
+		/**
+		 * DOCME add JavaDoc for method getInputDatas
+		 * 
+		 * @return
+		 * @since 0.1.0
+		 */
+		private List<InputData> getInputDatas() {
+			if (inputs.size() > 1) {
+				return getAggregatedInputData();
+			}
+
+			// TODO #3: implement getInputDatas
+			return List.of();
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for OsmToKml
+	 *
+	 * @author André Schulz
+	 *
+	 * @since 0.1.0
+	 */
+	private record InputData(OsmData data) {
+
+	}
+
+	/**
 	 * @since 0.1.0
 	 */
 	private List<String> inputs;
@@ -40,7 +96,7 @@ public class OsmToKml {
 	private String output;
 
 	/**
-	 * TODO make mandatory and remove default
+	 * TODO #3: make mandatory and remove default
 	 * 
 	 * @since 0.1.0
 	 */
@@ -57,21 +113,13 @@ public class OsmToKml {
 	public void run() throws IOException, InvalidInputFileException {
 		validate();
 
-		for (String input : inputs) {
-			for (OsmToKmlPipeline pipeline : pipelines) {
-				OsmData osmData = read(input);
+		List<InputData> inputDatas = new InputCollector().getInputDatas();
+		logger.debug("inputDatas:" + inputDatas.stream().map(d -> "\n• " + d).collect(Collectors.joining("")));
 
-				Kml kml = new Kml();
-				Document document = new Document();
-				kml.setFeature(document);
-
-				new OsmToKmlConverter(document).convert(osmData);
-
-				File outputFile = new File(getOutputFile(input, pipeline));
-				logger.debug("Writing KML file: " + outputFile);
-				outputFile.getParentFile().mkdirs();
-				new KmlWriter().write(kml, outputFile.getAbsolutePath());
-			}
+		if (!inputDatas.isEmpty()) {
+			runNew(inputDatas);
+		} else {
+			runOld();
 		}
 	}
 
@@ -79,7 +127,7 @@ public class OsmToKml {
 	 * DOCME add JavaDoc for method withInputs
 	 * 
 	 * @param inputs
-	 * @return
+	 * @return {@link OsmToKml}
 	 * @throws InvalidInputFileException
 	 * @since 0.1.0
 	 */
@@ -109,7 +157,7 @@ public class OsmToKml {
 	 * DOCME add JavaDoc for method withOutputs
 	 * 
 	 * @param output
-	 * @return
+	 * @return {@link OsmToKml}
 	 * @since 0.1.0
 	 */
 	public OsmToKml withOutput(String output) {
@@ -124,10 +172,15 @@ public class OsmToKml {
 	 * DOCME add JavaDoc for method withPipelines
 	 * 
 	 * @param pipelines
+	 * @return {@link OsmToKml}
 	 * @since 0.1.0
 	 */
-	public void withPipelines(List<OsmToKmlPipeline> pipelines) {
+	public OsmToKml withPipelines(List<OsmToKmlPipeline> pipelines) {
+		logger.trace("withPipelines " + pipelines.stream().map(OsmToKmlPipeline::getName).toList());
+
 		this.pipelines = pipelines;
+
+		return this;
 	}
 
 	/**
@@ -204,11 +257,65 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method validate
+	 * DOCME add JavaDoc for method runNew
 	 * 
+	 * @param inputDatas
+	 * @throws IOException
+	 * @since 0.1.0
+	 */
+	private void runNew(List<InputData> inputDatas) throws IOException {
+		OsmToKmlPipeline pipeline = pipelines.get(0);
+
+		if (pipeline.getName().equals("default")) {
+			logger.warn("running default pipeline");
+		}
+
+		Kml kml = new Kml();
+		Document document = new Document();
+		kml.setFeature(document);
+
+		new OsmToKmlConverter(document).convert(inputDatas.get(0).data());
+
+		File outputFile = new File(output + "/" + pipeline.getName() + ".kml");
+		logger.debug("Writing KML file: " + outputFile);
+		outputFile.getParentFile().mkdirs();
+		new KmlWriter().write(kml, outputFile.getAbsolutePath());
+	}
+
+	/**
+	 * DOCME add JavaDoc for method runOld
+	 * 
+	 * @throws IOException
+	 * @since 0.1.0
+	 */
+	private void runOld() throws IOException {
+		for (String input : inputs) {
+			for (OsmToKmlPipeline pipeline : pipelines) {
+				if (pipeline.getName().equals("default")) {
+					logger.warn("running default pipeline");
+				}
+
+				OsmData osmData = read(input);
+
+				Kml kml = new Kml();
+				Document document = new Document();
+				kml.setFeature(document);
+
+				new OsmToKmlConverter(document).convert(osmData);
+
+				File outputFile = new File(getOutputFile(input, pipeline));
+				logger.debug("Writing KML file: " + outputFile);
+				outputFile.getParentFile().mkdirs();
+				new KmlWriter().write(kml, outputFile.getAbsolutePath());
+			}
+		}
+	}
+
+	/**
 	 * @since 0.1.0
 	 */
 	private void validate() {
+		// TODO validate pipelines are set
 		if (inputs == null) {
 			throw new IllegalStateException("No input files specified!");
 		} else if (output == null) {
