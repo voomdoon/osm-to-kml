@@ -315,7 +315,7 @@ public class OsmToKml {
 	 * @since 0.1.0
 	 */
 	private void validate() {
-		// TODO validate pipelines are set
+		// TODO #11: validate pipelines are set
 		if (inputs == null) {
 			throw new IllegalStateException("No input files specified!");
 		} else if (output == null) {

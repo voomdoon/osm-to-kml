@@ -75,7 +75,7 @@ public class OsmReader {
 			}
 
 			logger.warn("process not implemented for " + entityContainer.getEntity());
-			// TODO implement process
+			// TODO #8: implement process
 		}
 	}
 
