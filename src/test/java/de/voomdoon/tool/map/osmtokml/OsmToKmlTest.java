@@ -555,11 +555,9 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 			try {
 				Files.copy(inputStream, input.toPath());
 			} catch (IOException e) {
-				// TODO implement error handling
 				throw new RuntimeException("Error at 'withInputs': " + e.getMessage(), e);
 			}
 		} catch (IOException e) {
-			// TODO implement error handling
 			throw new RuntimeException("Error at 'withInputs': " + e.getMessage(), e);
 		}
 	}
