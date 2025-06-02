@@ -3,6 +3,7 @@ package de.voomdoon.tool.map.osmtokml;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class OsmToKml {
 		 * @return
 		 * @since 0.1.0
 		 */
-		private List<InputData> getInputDatas() {
+		private List<InputData> getAggregatedInputDataOrEmpty() {
 			if (inputs.size() > 1) {
 				return getAggregatedInputData();
 			}
@@ -113,11 +114,21 @@ public class OsmToKml {
 	public void run() throws IOException, InvalidInputFileException {
 		validate();
 
-		List<InputData> inputDatas = new InputCollector().getInputDatas();
-		logger.debug("inputDatas:" + inputDatas.stream().map(d -> "\n• " + d).collect(Collectors.joining("")));
+		List<InputData> aggregatedInputDatasOrEmpty = new InputCollector().getAggregatedInputDataOrEmpty();
+		logger.debug("inputDatas:"
+				+ aggregatedInputDatasOrEmpty.stream().map(d -> "\n• " + d).collect(Collectors.joining("")));
 
-		if (!inputDatas.isEmpty()) {
-			runNew(inputDatas);
+		if (!aggregatedInputDatasOrEmpty.isEmpty()) {
+			runAggregatedInputs(aggregatedInputDatasOrEmpty);
+		} else if (pipelines.size() > 1) {
+			if (inputs.size() == 1 && new File(inputs.get(0)).isFile()) {
+				runMultiplePipelinesForSingleInputFile();
+			} else if (inputs.size() == 1 && new File(inputs.get(0)).isDirectory()) {
+				runMultiplePipelinesForSingleInputDirectory();
+			} else {
+				// TODO implement run
+				throw new UnsupportedOperationException("Method 'run' not implemented yet");
+			}
 		} else {
 			runOld();
 		}
@@ -146,6 +157,10 @@ public class OsmToKml {
 					throw new InvalidInputFileException("Expecting PBF input file, but got: " + input);
 				}
 			}
+		}
+
+		if (inputs.stream().map(File::new).filter(File::isDirectory).count() > 1) {
+			throw new IllegalArgumentException("Multiple input directories are not supported!");
 		}
 
 		this.inputs = inputs;
@@ -184,6 +199,20 @@ public class OsmToKml {
 	}
 
 	/**
+	 * DOCME add JavaDoc for method getInputName
+	 * 
+	 * @param fileName
+	 * @return
+	 * @since 0.1.0
+	 */
+	private String getInputName(String fileName) {
+		String name = new File(fileName).getName();
+		name = name.substring(0, name.length() - 8);
+
+		return name;
+	}
+
+	/**
 	 * DOCME add JavaDoc for method getOutputFile
 	 * 
 	 * @param input
@@ -195,13 +224,50 @@ public class OsmToKml {
 		logger.debug("getOutputFile " + input + " " + pipeline.getName());
 
 		if (inputs.size() > 1) {
-			String name = new File(input).getName();
-			name = name.substring(0, name.length() - 8);
+			String name = getInputName(input);
 
 			return output + "/" + name + ".kml";
 		}
 
 		return output + "/" + pipeline.getName() + ".kml";
+	}
+
+	/**
+	 * DOCME add JavaDoc for method getOutputFile
+	 * 
+	 * @param input
+	 * @param pipeline
+	 * @return
+	 * @since 0.1.0
+	 */
+	private String getOutputFile2(String input, OsmToKmlPipeline pipeline) {
+		logger.debug("getOutputFile2 " + input + " " + pipeline.getName());
+
+		return output + "/" + pipeline.getName() + "@" + getInputName(input) + ".kml";
+	}
+
+	/**
+	 * DOCME add JavaDoc for method getOutputFileForMultiplePipelines
+	 * 
+	 * @param input
+	 * @param pipeline
+	 * @return
+	 * @since 0.1.0
+	 */
+	private String getOutputFileForMultiplePipelinesAndSingleInputDirectory(String input, OsmToKmlPipeline pipeline) {
+		return output + "/" + pipeline.getName() + "/" + getInputName(input) + ".kml";
+	}
+
+	/**
+	 * DOCME add JavaDoc for method getOutputFileForMultiplePipelines
+	 * 
+	 * @param input
+	 * @param pipeline
+	 * @return
+	 * @since 0.1.0
+	 */
+	private String getOutputFileForMultiplePipelinesAndSingleInputFile(String input, OsmToKmlPipeline pipeline) {
+		return output + "/" + pipeline.getName() + "@" + getInputName(input) + ".kml";
 	}
 
 	/**
@@ -263,33 +329,82 @@ public class OsmToKml {
 	 * @throws IOException
 	 * @since 0.1.0
 	 */
-	private void runNew(List<InputData> inputDatas) throws IOException {
-		OsmToKmlPipeline pipeline = pipelines.get(0);
+	private void runAggregatedInputs(List<InputData> inputDatas) throws IOException {
+		logger.debug("runAggregatedInputs");
 
-		if (pipeline.getName().equals("default")) {
-			logger.warn("running default pipeline");
+		for (OsmToKmlPipeline pipeline : pipelines) {
+			if (pipeline.getName().equals("default")) {
+				logger.warn("running default pipeline");
+			}
+
+			Kml kml = new Kml();
+			Document document = new Document();
+			kml.setFeature(document);
+
+			new OsmToKmlConverter(document).convert(inputDatas.get(0).data());
+
+			File outputFile = new File(output + "/" + pipeline.getName() + ".kml");
+			logger.debug("Writing KML file: " + outputFile);
+			outputFile.getParentFile().mkdirs();
+			new KmlWriter().write(kml, outputFile.getAbsolutePath());
 		}
-
-		Kml kml = new Kml();
-		Document document = new Document();
-		kml.setFeature(document);
-
-		new OsmToKmlConverter(document).convert(inputDatas.get(0).data());
-
-		File outputFile = new File(output + "/" + pipeline.getName() + ".kml");
-		logger.debug("Writing KML file: " + outputFile);
-		outputFile.getParentFile().mkdirs();
-		new KmlWriter().write(kml, outputFile.getAbsolutePath());
 	}
 
 	/**
-	 * DOCME add JavaDoc for method runOld
+	 * DOCME add JavaDoc for method runDirectory
 	 * 
+	 * @param directory
 	 * @throws IOException
 	 * @since 0.1.0
 	 */
-	private void runOld() throws IOException {
-		for (String input : inputs) {
+	private void runDirectory(String directory) throws IOException {
+		for (File file : new File(directory).listFiles()) {
+			runFile(file);
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for method runFile
+	 * 
+	 * @param file
+	 * @throws IOException
+	 * @since 0.1.0
+	 */
+	private void runFile(File file) throws IOException {
+		for (OsmToKmlPipeline pipeline : pipelines) {
+			if (pipeline.getName().equals("default")) {
+				logger.warn("running default pipeline");
+			}
+
+			OsmData osmData = read(file.toString());
+
+			Kml kml = new Kml();
+			Document document = new Document();
+			kml.setFeature(document);
+
+			new OsmToKmlConverter(document).convert(osmData);
+
+			File outputFile = new File(getOutputFile2(file.toString(), pipeline));
+			logger.debug("Writing KML file: " + outputFile);
+			outputFile.getParentFile().mkdirs();
+			new KmlWriter().write(kml, outputFile.getAbsolutePath());
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for method runMultiplePipelinesForSingleInputDirectory
+	 * 
+	 * @throws IOException
+	 * 
+	 * @since 0.1.0
+	 */
+	private void runMultiplePipelinesForSingleInputDirectory() throws IOException {
+		logger.debug("runMultiplePipelinesForSingleInputDirectory");
+
+		List<String> files = Arrays.asList(new File(inputs.get(0)).listFiles()).stream().map(File::getAbsolutePath)
+				.toList();
+
+		for (String input : files) {
 			for (OsmToKmlPipeline pipeline : pipelines) {
 				if (pipeline.getName().equals("default")) {
 					logger.warn("running default pipeline");
@@ -303,10 +418,77 @@ public class OsmToKml {
 
 				new OsmToKmlConverter(document).convert(osmData);
 
-				File outputFile = new File(getOutputFile(input, pipeline));
+				File outputFile = new File(getOutputFileForMultiplePipelinesAndSingleInputDirectory(input, pipeline));
 				logger.debug("Writing KML file: " + outputFile);
 				outputFile.getParentFile().mkdirs();
 				new KmlWriter().write(kml, outputFile.getAbsolutePath());
+			}
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for method runMultiplePipelinesForSingleInput
+	 * 
+	 * @throws IOException
+	 * 
+	 * @since 0.1.0
+	 */
+	private void runMultiplePipelinesForSingleInputFile() throws IOException {
+		logger.debug("runMultiplePipelinesForSingleInput");
+
+		String input = inputs.get(0);
+
+		for (OsmToKmlPipeline pipeline : pipelines) {
+			if (pipeline.getName().equals("default")) {
+				logger.warn("running default pipeline");
+			}
+
+			OsmData osmData = read(input);
+
+			Kml kml = new Kml();
+			Document document = new Document();
+			kml.setFeature(document);
+
+			new OsmToKmlConverter(document).convert(osmData);
+
+			File outputFile = new File(getOutputFileForMultiplePipelinesAndSingleInputFile(input, pipeline));
+			logger.debug("Writing KML file: " + outputFile);
+			outputFile.getParentFile().mkdirs();
+			new KmlWriter().write(kml, outputFile.getAbsolutePath());
+		}
+	}
+
+	/**
+	 * DOCME add JavaDoc for method runOld
+	 * 
+	 * @throws IOException
+	 * @since 0.1.0
+	 */
+	private void runOld() throws IOException {
+		logger.debug("runOld");
+
+		for (String input : inputs) {
+			if (new File(input).isDirectory()) {
+				runDirectory(input);
+			} else {
+				for (OsmToKmlPipeline pipeline : pipelines) {
+					if (pipeline.getName().equals("default")) {
+						logger.warn("running default pipeline");
+					}
+
+					OsmData osmData = read(input);
+
+					Kml kml = new Kml();
+					Document document = new Document();
+					kml.setFeature(document);
+
+					new OsmToKmlConverter(document).convert(osmData);
+
+					File outputFile = new File(getOutputFile(input, pipeline));
+					logger.debug("Writing KML file: " + outputFile);
+					outputFile.getParentFile().mkdirs();
+					new KmlWriter().write(kml, outputFile.getAbsolutePath());
+				}
 			}
 		}
 	}

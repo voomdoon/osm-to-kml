@@ -35,6 +35,7 @@ import de.voomdoon.testing.file.TempFileExtension;
 import de.voomdoon.testing.file.TempInputDirectory;
 import de.voomdoon.testing.file.TempInputFile;
 import de.voomdoon.testing.file.TempOutputDirectory;
+import de.voomdoon.testing.file.WithTempInputDirectories;
 import de.voomdoon.testing.file.WithTempInputFiles;
 import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
 import de.voomdoon.util.file.FileTreeFormatter;
@@ -50,7 +51,7 @@ import de.voomdoon.util.kml.io.KmlReader;
 class OsmToKmlTest extends LoggingCheckingTestBase {
 
 	/**
-	 * DOCME add JavaDoc for OsmToKmlTest
+	 * Tests for the mapping of input files and pipelines to output files.
 	 *
 	 * @author André Schulz
 	 *
@@ -62,8 +63,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	class InputOutputMappingTest extends TestBase {
 
 		/**
-		 * DOCME add JavaDoc for OsmToKmlTest.InputOutputMappingTest
-		 *
 		 * @author André Schulz
 		 *
 		 * @since 0.1.0
@@ -71,7 +70,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		@Nested
 		@ExtendWith(TempFileExtension.class)
 		@WithTempInputFiles(extension = "osm.pbf")
-		class Scenario1_1inputFile_1pipeline_Test extends TestBase {
+		class Scenario1_singleInputFile_singlePipeline_Test extends TestBase {
 
 			/**
 			 * @since 0.1.0
@@ -88,14 +87,11 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 				Kml actual = runDirectory(outputDirectory, "test-pipeline.kml");
 
-				assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
-						.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
+				assertNode1566942192coordinates(actual);
 			}
 		}
 
 		/**
-		 * DOCME add JavaDoc for OsmToKmlTest.InputOutputMappingTest
-		 *
 		 * @author André Schulz
 		 *
 		 * @since 0.1.0
@@ -103,7 +99,42 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		@Nested
 		@ExtendWith(TempFileExtension.class)
 		@WithTempInputFiles(extension = "osm.pbf")
-		class Scenario3_nInputFiles_1pipeline_Test extends TestBase {
+		class Scenario2_singleInputFile_multiplePipelines_Test extends TestBase {
+
+			/**
+			 * @since 0.1.0
+			 */
+			@Test
+			void test(@TempInputFile File inputFile, @TempOutputDirectory File outputDirectory) throws Exception {
+				logTestStart();
+
+				withInputs(Map.of(inputFile, "node_1566942192.osm.pbf"));
+
+				osmToKml.withPipelines(List.of(//
+						new OsmToKmlPipeline().setName("test-pipeline1"),
+						new OsmToKmlPipeline().setName("test-pipeline2")));
+
+				runDirectory(outputDirectory);
+
+				Kml actual = read(outputDirectory, "test-pipeline1@"
+						+ inputFile.getName().substring(0, inputFile.getName().length() - 8) + ".kml");
+				assertNode1566942192coordinates(actual);
+
+				actual = read(outputDirectory, "test-pipeline2@"
+						+ inputFile.getName().substring(0, inputFile.getName().length() - 8) + ".kml");
+				assertNode1566942192coordinates(actual);
+			}
+		}
+
+		/**
+		 * @author André Schulz
+		 *
+		 * @since 0.1.0
+		 */
+		@Nested
+		@ExtendWith(TempFileExtension.class)
+		@WithTempInputFiles(extension = "osm.pbf")
+		class Scenario3_multipleInputFiles_singlePipeline_aggregatedOutput_Test extends TestBase {
 
 			/**
 			 * @since 0.1.0
@@ -127,8 +158,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		}
 
 		/**
-		 * DOCME add JavaDoc for OsmToKmlTest.InputOutputMappingTest
-		 *
 		 * @author André Schulz
 		 *
 		 * @since 0.1.0
@@ -136,17 +165,52 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		@Nested
 		@ExtendWith(TempFileExtension.class)
 		@WithTempInputFiles(extension = "osm.pbf")
-		class Scenario5_1inputDirectory_1pipeline_Test extends TestBase {
+		class Scenario4_multipleInputFiles_multiplePipelines_aggregatedOutput_Test extends TestBase {
 
 			/**
 			 * @since 0.1.0
 			 */
 			@Test
-			void test(@TempInputDirectory File inputDirectory, @TempOutputDirectory File outputDirectory)
+			void test(@TempInputFile File inputFile1, @TempInputFile File inputFile2,
+					@TempOutputDirectory File outputDirectory) throws Exception {
+				logTestStart();
+
+				withInputs(Map.of(inputFile1, "node_1566942192.osm.pbf", inputFile2, "node_8400710442.osm.pbf"));
+
+				osmToKml.withPipelines(List.of(//
+						new OsmToKmlPipeline().setName("test-pipeline1"),
+						new OsmToKmlPipeline().setName("test-pipeline2")));
+
+				runDirectory(outputDirectory);
+
+				Kml actual = read(outputDirectory, "test-pipeline1.kml");
+				assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
+						.hasSize(2);
+
+				actual = read(outputDirectory, "test-pipeline2.kml");
+				assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
+						.hasSize(2);
+			}
+		}
+
+		/**
+		 * @author André Schulz
+		 *
+		 * @since 0.1.0
+		 */
+		@Nested
+		@ExtendWith(TempFileExtension.class)
+		@WithTempInputDirectories(create = true)
+		class Scenario5_singleInputDirectory_singlePipeline_Test extends TestBase {
+
+			/**
+			 * @since 0.1.0
+			 */
+			@Test
+			void test_mutilpeFiles(@TempInputDirectory File inputDirectory, @TempOutputDirectory File outputDirectory)
 					throws Exception {
 				logTestStart();
 
-				inputDirectory.mkdirs();
 				copyResourceToInputFile("node_1566942192.osm.pbf", new File(inputDirectory + "/1.osm.pbf"));
 				copyResourceToInputFile("node_8400710442.osm.pbf", new File(inputDirectory + "/2.osm.pbf"));
 				osmToKml.withInputs(List.of(inputDirectory.getAbsolutePath()));
@@ -157,10 +221,46 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 				runDirectory(outputDirectory);
 
-				Kml actual = read(outputDirectory, "test-pipeline.kml");
+				Kml actual = read(outputDirectory, "test-pipeline@1.kml");
+				assertNode1566942192coordinates(actual);
 
-				assertDocument(actual).extracting(Document::getFeature).asInstanceOf(InstanceOfAssertFactories.LIST)
-						.hasSize(2);
+				actual = read(outputDirectory, "test-pipeline@2.kml");
+				assertNode8400710442coordinates(actual);
+			}
+		}
+
+		/**
+		 * @author André Schulz
+		 *
+		 * @since 0.1.0
+		 */
+		@Nested
+		@ExtendWith(TempFileExtension.class)
+		@WithTempInputDirectories(create = true)
+		class Scenario6_singleInputDirectory_mutiplePipelines_Test extends TestBase {
+
+			/**
+			 * @since 0.1.0
+			 */
+			@Test
+			void test_singleFile(@TempInputDirectory File inputDirectory, @TempOutputDirectory File outputDirectory)
+					throws Exception {
+				logTestStart();
+
+				copyResourceToInputFile("node_1566942192.osm.pbf", new File(inputDirectory + "/single.osm.pbf"));
+				osmToKml.withInputs(List.of(inputDirectory.getAbsolutePath()));
+
+				osmToKml.withPipelines(List.of(//
+						new OsmToKmlPipeline().setName("test-pipeline1"),
+						new OsmToKmlPipeline().setName("test-pipeline2")));
+
+				runDirectory(outputDirectory);
+
+				Kml actual = read(outputDirectory, "test-pipeline1/single.kml");
+				assertNode1566942192coordinates(actual);
+
+				actual = read(outputDirectory, "test-pipeline2/single.kml");
+				assertNode1566942192coordinates(actual);
 			}
 		}
 	}
@@ -271,8 +371,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 
 			Kml actual = run(output);
 
-			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
-					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5186776, 13.4075684);
+			assertNode8400710442coordinates(actual);
 		}
 
 		/**
@@ -315,16 +414,29 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	@Nested
 	@ExtendWith(TempFileExtension.class)
 	@WithTempInputFiles(extension = "pbf")
+	@WithTempInputDirectories(create = true)
 	class WithInputsTets extends TestBase {
 
 		/**
 		 * @since 0.1.0
 		 */
 		@Test
-		void test_IAE_empty(@TempInputFile String input) throws Exception {
+		void test_error_IAE_empty(@TempInputFile String input) throws Exception {
 			logTestStart();
 
 			assertThatThrownBy(() -> osmToKml.withInputs(List.of())).isInstanceOf(IllegalArgumentException.class);
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_error_IAE_multipleDirectoreis(@TempInputDirectory String directory1,
+				@TempInputDirectory String directory2) throws Exception {
+			logTestStart();
+
+			assertThatThrownBy(() -> osmToKml.withInputs(List.of(directory1, directory2)))
+					.isInstanceOf(IllegalArgumentException.class);
 		}
 
 		/**
@@ -361,8 +473,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 	}
 
 	/**
-	 * DOCME add JavaDoc for OsmToKmlTest
-	 *
 	 * @author André Schulz
 	 *
 	 * @since 0.1.0
@@ -380,8 +490,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		protected OsmToKml osmToKml = new OsmToKml();
 
 		/**
-		 * DOCME add JavaDoc for method assertCoordinate
-		 * 
 		 * @param coordinateAssert
 		 * @param expectedLatitude
 		 * @param expectedLongitude
@@ -409,6 +517,28 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		}
 
 		/**
+		 * DOCME add JavaDoc for method assertNode1566942192coordinates
+		 * 
+		 * @param actual
+		 * @since 0.1.0
+		 */
+		protected void assertNode1566942192coordinates(Kml actual) {
+			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
+					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5237871, 13.4123426);
+		}
+
+		/**
+		 * DOCME add JavaDoc for method assertNode8400710442coordinates
+		 * 
+		 * @param actual
+		 * @since 0.1.0
+		 */
+		protected void assertNode8400710442coordinates(Kml actual) {
+			assertCoordinate(assertPoint(actual).extracting(Point::getCoordinates)
+					.asInstanceOf(InstanceOfAssertFactories.LIST).singleElement(), 52.5186776, 13.4075684);
+		}
+
+		/**
 		 * @param actual
 		 *            {@link Kml}
 		 * @return {@link ObjectAssert} for single {@link Placemark}
@@ -432,7 +562,7 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		}
 
 		/**
-		 * DOCME add JavaDoc for method read
+		 * Tries to read {@link Kml} from a file relative to the output directory.
 		 * 
 		 * @param outputDirectory
 		 * @param file
@@ -450,8 +580,6 @@ class OsmToKmlTest extends LoggingCheckingTestBase {
 		}
 
 		/**
-		 * DOCME add JavaDoc for method run
-		 * 
 		 * @param outputDirectory
 		 * @return {@link Kml} or {@code null} if file not found
 		 * @throws IOException
