@@ -23,6 +23,7 @@ import de.voomdoon.testing.logging.tests.LoggingCheckingTestBase;
 import de.voomdoon.tool.map.osmtokml.OsmToKmlProgram.OsmToKmlProgramV2Options;
 import de.voomdoon.util.cli.ProgramExecutionException;
 import de.voomdoon.util.cli.ProgramRunException;
+import de.voomdoon.util.cli.args.exception.option.MissingCliOptionException;
 import de.voomdoon.util.cli.testing.ProgramTestingUtil;
 
 /**
@@ -65,6 +66,20 @@ class OsmToKmlProgramTest {
 		 * @since 0.1.0
 		 */
 		@Test
+		void test_error_input_missing(@TempOutputDirectory File output) throws Exception {
+			logTestStart();
+
+			ProgramExecutionException actual = assertThrows(ProgramExecutionException.class, () -> OsmToKmlProgram
+					.main(new String[] { "--" + OsmToKmlProgramV2Options.OUTPUT, output.getAbsolutePath() }));
+
+			assertThat(actual).hasCauseInstanceOf(MissingCliOptionException.class).cause()
+					.hasMessageContaining(OsmToKmlProgramV2Options.INPUT);
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
 		void test_error_input_nonPbfIsRejected(@TempFile File input, @TempOutputDirectory File output)
 				throws Exception {
 			logTestStart();
@@ -76,6 +91,20 @@ class OsmToKmlProgramTest {
 
 			assertThat(actual).hasCauseInstanceOf(ProgramRunException.class)//
 					.cause().hasCauseInstanceOf(InvalidInputFileException.class);
+		}
+
+		/**
+		 * @since 0.1.0
+		 */
+		@Test
+		void test_error_output_missing(@TempFile File input) throws Exception {
+			logTestStart();
+
+			ProgramExecutionException actual = assertThrows(ProgramExecutionException.class, () -> OsmToKmlProgram
+					.main(new String[] { "--" + OsmToKmlProgramV2Options.INPUT, input.getAbsolutePath() }));
+
+			assertThat(actual).hasCauseInstanceOf(MissingCliOptionException.class).cause()
+					.hasMessageContaining(OsmToKmlProgramV2Options.OUTPUT);
 		}
 
 		/**

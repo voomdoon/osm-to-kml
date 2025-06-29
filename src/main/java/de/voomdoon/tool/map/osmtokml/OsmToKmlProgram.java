@@ -81,7 +81,7 @@ public class OsmToKmlProgram extends Program {
 	@Override
 	protected void run() throws Exception {
 		List<String> inputs = getArguments().getOptionValue(options.input).map(output -> List.of(output))
-				.orElse(List.of());
+				.orElseThrow(() -> new MissingCliOptionException(options.input));
 		String output = getArguments().getOptionValue(options.output)
 				.orElseThrow(() -> new MissingCliOptionException(options.output));
 
