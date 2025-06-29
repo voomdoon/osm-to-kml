@@ -18,7 +18,7 @@ import de.voomdoon.logging.Logger;
 import de.voomdoon.util.kml.io.KmlWriter;
 
 /**
- * DOCME add JavaDoc for
+ * Converts OpenStreetMap {@code PBF} to KML {@code XML}.
  *
  * @author André Schulz
  *
@@ -71,8 +71,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for OsmToKml
-	 *
 	 * @author André Schulz
 	 *
 	 * @since 0.1.0
@@ -104,8 +102,6 @@ public class OsmToKml {
 	private List<OsmToKmlPipeline> pipelines = List.of(new OsmToKmlPipeline().setName("default"));
 
 	/**
-	 * DOCME add JavaDoc for method run
-	 * 
 	 * @throws IOException
 	 * @throws InvalidInputFileException
 	 * 
@@ -135,10 +131,9 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method withInputs
-	 * 
 	 * @param inputs
-	 * @return {@link OsmToKml}
+	 *            {@link List} of input file names or directories
+	 * @return this {@link OsmToKml}
 	 * @throws InvalidInputFileException
 	 * @since 0.1.0
 	 */
@@ -169,10 +164,9 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method withOutputs
-	 * 
 	 * @param output
-	 * @return {@link OsmToKml}
+	 *            output directory for KML files
+	 * @return this {@link OsmToKml}
 	 * @since 0.1.0
 	 */
 	public OsmToKml withOutput(String output) {
@@ -184,10 +178,9 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method withPipelines
-	 * 
 	 * @param pipelines
-	 * @return {@link OsmToKml}
+	 *            {@link List} of {@link OsmToKmlPipeline} to use for processing
+	 * @return this {@link OsmToKml}
 	 * @since 0.1.0
 	 */
 	public OsmToKml withPipelines(List<OsmToKmlPipeline> pipelines) {
@@ -199,10 +192,9 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method getInputName
-	 * 
 	 * @param fileName
-	 * @return
+	 *            input file name {@link String}
+	 * @return the name of the input file without the extension
 	 * @since 0.1.0
 	 */
 	private String getInputName(String fileName) {
@@ -213,11 +205,11 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method getOutputFile
-	 * 
 	 * @param input
+	 *            input file name {@link String}
 	 * @param pipeline
-	 * @return
+	 *            {@link OsmToKmlPipeline}
+	 * @return output file name for the given input and pipeline
 	 * @since 0.1.0
 	 */
 	private String getOutputFile(String input, OsmToKmlPipeline pipeline) {
@@ -233,25 +225,26 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method getOutputFile
-	 * 
 	 * @param input
+	 *            input file name {@link String}
 	 * @param pipeline
-	 * @return
+	 *            {@link OsmToKmlPipeline}
+	 * @return output file name for the given input and pipeline
 	 * @since 0.1.0
 	 */
 	private String getOutputFile2(String input, OsmToKmlPipeline pipeline) {
+		// TODO unify code
 		logger.debug("getOutputFile2 " + input + " " + pipeline.getName());
 
 		return output + "/" + pipeline.getName() + "@" + getInputName(input) + ".kml";
 	}
 
 	/**
-	 * DOCME add JavaDoc for method getOutputFileForMultiplePipelines
-	 * 
 	 * @param input
+	 *            input file name {@link String}
 	 * @param pipeline
-	 * @return
+	 *            {@link OsmToKmlPipeline}
+	 * @return output file name for the given input and pipeline
 	 * @since 0.1.0
 	 */
 	private String getOutputFileForMultiplePipelinesAndSingleInputDirectory(String input, OsmToKmlPipeline pipeline) {
@@ -259,11 +252,11 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method getOutputFileForMultiplePipelines
-	 * 
 	 * @param input
+	 *            input file name {@link String}
 	 * @param pipeline
-	 * @return
+	 *            {@link OsmToKmlPipeline}
+	 * @return output file name for the given input and pipeline
 	 * @since 0.1.0
 	 */
 	private String getOutputFileForMultiplePipelinesAndSingleInputFile(String input, OsmToKmlPipeline pipeline) {
@@ -271,8 +264,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method joinOsmDatas
-	 * 
 	 * @param osmDatas
 	 * @return
 	 * @since 0.1.0
@@ -298,11 +289,9 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method read
-	 * 
 	 * @param input
 	 * 
-	 * @return
+	 * @return {@link OsmData}
 	 * @since 0.1.0
 	 */
 	private OsmData read(String input) {
@@ -324,8 +313,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method runNew
-	 * 
 	 * @param inputDatas
 	 * @throws IOException
 	 * @since 0.1.0
@@ -352,8 +339,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method runDirectory
-	 * 
 	 * @param directory
 	 * @throws IOException
 	 * @since 0.1.0
@@ -393,8 +378,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method runMultiplePipelinesForSingleInputDirectory
-	 * 
 	 * @throws IOException
 	 * 
 	 * @since 0.1.0
@@ -428,8 +411,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method runMultiplePipelinesForSingleInput
-	 * 
 	 * @throws IOException
 	 * 
 	 * @since 0.1.0
@@ -460,8 +441,6 @@ public class OsmToKml {
 	}
 
 	/**
-	 * DOCME add JavaDoc for method runOld
-	 * 
 	 * @throws IOException
 	 * @since 0.1.0
 	 */
