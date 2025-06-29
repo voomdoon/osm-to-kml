@@ -226,7 +226,7 @@ public class OsmToKml {
 		if (inputs.size() > 1) {
 			String name = getInputName(input);
 
-			return output + "/" + name + ".kml";
+			return output + "/" + name + ".kml";// TESTME
 		}
 
 		return output + "/" + pipeline.getName() + ".kml";
@@ -313,6 +313,7 @@ public class OsmToKml {
 			OsmData osmData = new OsmReader().read(input);
 			osmDatas.add(osmData);
 		} else {
+			// TESTME
 			for (File f : file.listFiles()) {
 				OsmData osmData = new OsmReader().read(f.getAbsolutePath());
 				osmDatas.add(osmData);

@@ -87,7 +87,7 @@ public class OsmToKmlProgram extends Program {
 		try {
 			osmToKml.run();
 		} catch (InvalidInputFileException e) {
-			throw new ProgramRunException(e);
+			throw new ProgramRunException(e);// TESTME
 		}
 	}
 }
