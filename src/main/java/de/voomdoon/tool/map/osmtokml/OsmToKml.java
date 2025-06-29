@@ -27,7 +27,7 @@ import de.voomdoon.util.kml.io.KmlWriter;
 public class OsmToKml {
 
 	/**
-	 * DOCME add JavaDoc for OsmToKml
+	 * Collects input data from the given input files or directories.
 	 *
 	 * @author André Schulz
 	 *
@@ -36,8 +36,6 @@ public class OsmToKml {
 	private class InputCollector {
 
 		/**
-		 * DOCME add JavaDoc for method getAggregatedinputData
-		 * 
 		 * @return
 		 * @since 0.1.0
 		 */
@@ -55,8 +53,6 @@ public class OsmToKml {
 		}
 
 		/**
-		 * DOCME add JavaDoc for method getInputDatas
-		 * 
 		 * @return
 		 * @since 0.1.0
 		 */

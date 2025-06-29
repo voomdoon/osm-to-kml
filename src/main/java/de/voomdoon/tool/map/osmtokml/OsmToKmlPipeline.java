@@ -5,7 +5,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
- * DOCME add JavaDoc for
+ * Definition on how to convert OpenStreetMap data to KML.
  *
  * @author André Schulz
  *

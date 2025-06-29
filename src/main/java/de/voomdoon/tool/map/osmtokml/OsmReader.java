@@ -12,7 +12,7 @@ import de.voomdoon.logging.LogManager;
 import de.voomdoon.logging.Logger;
 
 /**
- * DOCME add JavaDoc for
+ * Reads OpenStreetMap {@code PBF} from a file.
  *
  * @author André Schulz
  *
@@ -21,8 +21,6 @@ import de.voomdoon.logging.Logger;
 public class OsmReader {
 
 	/**
-	 * DOCME add JavaDoc for OsmToKml
-	 *
 	 * @author André Schulz
 	 *
 	 * @since 0.1.0
@@ -85,10 +83,8 @@ public class OsmReader {
 	private final Logger logger = LogManager.getLogger(getClass());
 
 	/**
-	 * DOCME add JavaDoc for method read
-	 * 
 	 * @param input
-	 * @return
+	 * @return {@link OsmData}
 	 * @since 0.1.0
 	 */
 	public OsmData read(String input) {
