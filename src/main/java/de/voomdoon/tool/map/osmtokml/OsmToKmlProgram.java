@@ -5,7 +5,6 @@ import java.util.List;
 import de.voomdoon.util.cli.Program;
 import de.voomdoon.util.cli.ProgramRunException;
 import de.voomdoon.util.cli.args.Option;
-import de.voomdoon.util.cli.args.exception.option.MissingCliOptionException;
 
 /**
  * DOCME add JavaDoc for
@@ -49,8 +48,8 @@ public class OsmToKmlProgram extends Program {
 		 * @since 0.1.0
 		 */
 		public void init() {
-			input = addOption().longName(INPUT).hasValue("file").build();
-			output = addOption().longName(OUTPUT).hasValue("file").build();
+			input = addOption().longName(INPUT).hasValue("file").isMandatory().build();
+			output = addOption().longName(OUTPUT).hasValue("file").isMandatory().build();
 		}
 	}
 
@@ -80,10 +79,8 @@ public class OsmToKmlProgram extends Program {
 	 */
 	@Override
 	protected void run() throws Exception {
-		List<String> inputs = getArguments().getOptionValue(options.input).map(output -> List.of(output))
-				.orElseThrow(() -> new MissingCliOptionException(options.input));
-		String output = getArguments().getOptionValue(options.output)
-				.orElseThrow(() -> new MissingCliOptionException(options.output));
+		List<String> inputs = getArguments().getOptionValue(options.input).map(output -> List.of(output)).orElse(null);
+		String output = getArguments().getOptionValue(options.output).orElse(null);
 
 		OsmToKml osmToKml = new OsmToKml().withInputs(inputs).withOutput(output);
 
