@@ -23,7 +23,7 @@
 			<dependency>
 				<groupId>org.junit</groupId>
 				<artifactId>junit-bom</artifactId>
-				<version>5.13.4</version> <!-- Align everything to 5.13.4 -->
+				<version>6.0.0</version> <!-- Align everything to 6.0.0 -->
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
