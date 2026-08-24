@@ -1,0 +1,97 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+
+concurrency:
+  group: dependabot-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check_setup:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check for DEPENDABOT_AUTOMERGE_PAT secret
+        run: |
+          if [ -z "${{ secrets.DEPENDABOT_AUTOMERGE_PAT }}" ]; then
+            echo "Error: DEPENDABOT_AUTOMERGE_PAT secret is not set. Exiting." >&2
+            exit 1
+          fi
+
+  approve:
+    needs: check_setup
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      should_automerge: ${{ steps.policy.outputs.should_automerge }}
+
+    steps:
+      - id: verify
+        name: Verify PR is from Dependabot
+        run: |
+          pr_json=$(gh api "/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}")
+
+          author=$(jq -r '.user.login' <<<"$pr_json")
+          draft=$(jq -r '.draft' <<<"$pr_json")
+          base_ref=$(jq -r '.base.ref' <<<"$pr_json")
+
+          if [ "$author" = "dependabot[bot]" ] && [ "$draft" = "false" ] && [ "$base_ref" = "main" ]; then
+            echo "verified=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "verified=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - id: meta
+        name: Fetch metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: policy
+        name: Decide auto-merge policy
+        run: |
+          SHOULD="false"
+
+          # Only evaluate policy if PR is verified as from Dependabot
+          if [ "${{ steps.verify.outputs.verified }}" = "true" ]; then
+            UPDATE_TYPE="${{ steps.meta.outputs.update-type }}"
+            ECO="${{ steps.meta.outputs.package-ecosystem }}"
+
+            # allow: any patch or minor
+            if [ "$UPDATE_TYPE" = "version-update:semver-patch" ] || [ "$UPDATE_TYPE" = "version-update:semver-minor" ]; then
+              SHOULD="true"
+            fi
+
+            # allow: github-actions major
+            if [ "$ECO" = "github_actions" ] && [ "$UPDATE_TYPE" = "version-update:semver-major" ]; then
+              SHOULD="true"
+            fi
+          fi
+
+          echo "should_automerge=$SHOULD" >> "$GITHUB_OUTPUT"
+
+      - name: Approve Dependabot PR
+        if: steps.policy.outputs.should_automerge == 'true'
+        run: gh pr review "${{ github.event.pull_request.html_url }}" --approve -b "Auto-approving Dependabot update."
+        env:
+          GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_PAT }}
+
+  automerge:
+    needs: approve
+    if: needs.approve.outputs.should_automerge == 'true'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+      - name: Enable auto-merge
+        run: |
+          gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}" || { echo "Error: Failed to enable auto-merge." >&2; exit 1; }
+        env:
+          GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_PAT }}

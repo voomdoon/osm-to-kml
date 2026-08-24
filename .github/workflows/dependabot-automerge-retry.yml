@@ -1,0 +1,110 @@
+name: Retry failed Dependabot auto-merge
+
+on:
+  workflow_run:
+    workflows: ["Dependabot auto-merge"]
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: retry-dependabot-automerge-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  retry:
+    runs-on: ubuntu-slim
+
+    steps:
+      - name: Re-validate workflow run and associated PR
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          REPO: ${{ github.event.workflow_run.repository.full_name }}
+          EXPECTED_WORKFLOW_NAME: Dependabot auto-merge
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          run_json=$(gh api "/repos/$REPO/actions/runs/$EVENT_RUN_ID")
+
+          run_id=$(jq -r '.id' <<<"$run_json")
+          workflow_name=$(jq -r '.name // ""' <<<"$run_json")
+          event_name=$(jq -r '.event // ""' <<<"$run_json")
+          conclusion=$(jq -r '.conclusion // ""' <<<"$run_json")
+          run_attempt=$(jq -r '.run_attempt // 0' <<<"$run_json")
+          head_repo=$(jq -r '.head_repository.full_name // ""' <<<"$run_json")
+          actor_login=$(jq -r '.triggering_actor.login // .actor.login // ""' <<<"$run_json")
+
+          pr_number=$(jq -r '
+            if (.pull_requests | length) == 1
+            then .pull_requests[0].number
+            else empty
+            end
+          ' <<<"$run_json")
+
+          trusted=false
+          retryable=false
+
+          if [ -n "${pr_number:-}" ] &&
+             [ "$workflow_name" = "$EXPECTED_WORKFLOW_NAME" ] &&
+             { [ "$event_name" = "pull_request" ] || [ "$event_name" = "pull_request_target" ]; } &&
+             [ "$head_repo" = "$REPO" ] &&
+             [ "$actor_login" = "dependabot[bot]" ]; then
+            pr_json=$(gh api "/repos/$REPO/pulls/$pr_number")
+
+            pr_author=$(jq -r '.user.login // ""' <<<"$pr_json")
+            pr_head_repo=$(jq -r '.head.repo.full_name // ""' <<<"$pr_json")
+            pr_base_repo=$(jq -r '.base.repo.full_name // ""' <<<"$pr_json")
+            pr_state=$(jq -r '.state // ""' <<<"$pr_json")
+
+            if [ "$pr_author" = "dependabot[bot]" ] &&
+               [ "$pr_head_repo" = "$REPO" ] &&
+               [ "$pr_base_repo" = "$REPO" ] &&
+               [ "$pr_state" = "open" ]; then
+              trusted=true
+            fi
+          fi
+
+          if [ "$trusted" = true ] &&
+             [ "$conclusion" = "failure" ] &&
+             [ "$run_attempt" -lt 3 ]; then
+            retryable=true
+          fi
+
+          {
+            echo "trusted=$trusted"
+            echo "retryable=$retryable"
+            echo "run_id=$run_id"
+            echo "run_attempt=$run_attempt"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Delay on final retry
+        if: >
+          steps.verify.outputs.trusted == 'true' &&
+          steps.verify.outputs.retryable == 'true' &&
+          steps.verify.outputs.run_attempt == '2'
+        shell: bash
+        run: |
+          delay=$((30 + RANDOM % 31))
+          echo "Final retry: sleeping ${delay}s"
+          sleep "$delay"
+
+      - name: Re-run workflow
+        if: >
+          steps.verify.outputs.trusted == 'true' &&
+          steps.verify.outputs.retryable == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.event.workflow_run.repository.full_name }}
+          RUN_ID: ${{ steps.verify.outputs.run_id }}
+        shell: bash
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/$REPO/actions/runs/$RUN_ID/rerun"
